@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Complete Home — Field Operations Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+/* ════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════ */
+:root {
+  /* Backgrounds */
+  --bg-base: #070b14;
+  --bg-surface: #0d1220;
+  --bg-card: #111827;
+  --bg-card-hover: #161f30;
+  --bg-elevated: #1a2235;
+  --bg-input: #0d1220;
+  --bg-overlay: rgba(7,11,20,0.88);
+
+/* Brand Blue */
+–blue: #2563eb;
+–blue-light: #3b82f6;
+–blue-ghost: rgba(37,99,235,0.12);
+–blue-border: rgba(59,130,246,0.35);
+
+/* Accent palette */
+–green: #10b981;
+–green-ghost: rgba(16,185,129,0.1);
+–green-border: rgba(16,185,129,0.3);
+–amber: #f59e0b;
+–amber-ghost: rgba(245,158,11,0.1);
+–red: #ef4444;
+–red-ghost: rgba(239,68,68,0.1);
+–red-border: rgba(239,68,68,0.3);
+–violet: #8b5cf6;
+–violet-ghost: rgba(139,92,246,0.1);
+–cyan: #06b6d4;
+–cyan-ghost: rgba(6,182,212,0.1);
+
+/* Text */
+–text-primary: #f1f5f9;
+–text-secondary: #94a3b8;
+–text-muted: #475569;
+–text-inverse: #0d1220;
+
+/* Borders */
+–border: rgba(255,255,255,0.07);
+–border-strong: rgba(255,255,255,0.14);
+–border-focus: rgba(59,130,246,0.5);
+
+/* Shadows */
+–shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+–shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+–shadow-lg: 0 10px 40px rgba(0,0,0,0.6);
+–shadow-blue: 0 0 0 3px rgba(59,130,246,0.2);
+
+/* Sidebar */
+–sidebar-w: 240px;
+–sidebar-collapsed: 64px;
+
+/* Typography */
+–font-display: ‘Outfit’, sans-serif;
+–font-mono: ‘DM Mono’, monospace;
+}
+
+/* ════════════════════════════════════════════
+RESET & BASE
+════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+width: 100%; height: 100%;
+background: var(–bg-base);
+color: var(–text-primary);
+font-family: var(–font-display);
+font-size: 14px;
+line-height: 1.5;
+overflow: hidden;
+-webkit-font-smoothing: antialiased;
+}
+button { font-family: var(–font-display); cursor: pointer; }
+input, select, textarea { font-family: var(–font-display); }
+a { color: var(–blue-light); text-decoration: none; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(–bg-elevated); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(–text-muted); }
+
+/* ════════════════════════════════════════════
+SHELL LAYOUT
+════════════════════════════════════════════ */
+#shell {
+display: flex;
+width: 100vw;
+height: 100vh;
+overflow: hidden;
+}
+
+/* ════════════════════════════════════════════
+SIDEBAR
+════════════════════════════════════════════ */
+#sidebar {
+width: var(–sidebar-w);
+height: 100%;
+background: var(–bg-surface);
+border-right: 1px solid var(–border);
+display: flex;
+flex-direction: column;
+flex-shrink: 0;
+transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+overflow: hidden;
+z-index: 100;
+position: relative;
+}
+#sidebar.collapsed { width: var(–sidebar-collapsed); }
+
+/* Logo */
+.sb-logo {
+padding: 20px 18px 18px;
+display: flex;
+align-items: center;
+gap: 12px;
+border-bottom: 1px solid var(–border);
+flex-shrink: 0;
+min-height: 64px;
+}
+.sb-logo-icon {
+width: 32px;
+height: 32px;
+background: var(–blue);
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 16px;
+flex-shrink: 0;
+box-shadow: 0 0 16px rgba(37,99,235,0.4);
+}
+.sb-logo-text { overflow: hidden; white-space: nowrap; }
+.sb-logo-title {
+font-size: 15px;
+font-weight: 800;
+color: var(–text-primary);
+letter-spacing: -0.3px;
+line-height: 1.2;
+}
+.sb-logo-sub {
+font-size: 10px;
+color: var(–text-muted);
+font-family: var(–font-mono);
+letter-spacing: 1.5px;
+text-transform: uppercase;
+margin-top: 1px;
+}
+
+/* Toggle button */
+.sb-toggle {
+position: absolute;
+top: 18px;
+right: -12px;
+width: 24px;
+height: 24px;
+background: var(–bg-elevated);
+border: 1px solid var(–border-strong);
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 11px;
+color: var(–text-secondary);
+transition: all 0.2s;
+z-index: 10;
+cursor: pointer;
+}
+.sb-toggle:hover { background: var(–blue); color: #fff; border-color: var(–blue); }
+
+/* Nav groups */
+.sb-nav { flex: 1; padding: 10px 0; overflow-y: auto; overflow-x: hidden; }
+.sb-group-label {
+padding: 14px 18px 6px;
+font-size: 10px;
+font-weight: 600;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(–text-muted);
+white-space: nowrap;
+overflow: hidden;
+font-family: var(–font-mono);
+transition: opacity 0.2s;
+}
+#sidebar.collapsed .sb-group-label { opacity: 0; }
+
+.sb-item {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 9px 18px;
+margin: 1px 8px;
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.15s;
+position: relative;
+white-space: nowrap;
+color: var(–text-secondary);
+font-size: 13.5px;
+font-weight: 500;
+border: none;
+background: transparent;
+width: calc(100% - 16px);
+text-align: left;
+}
+.sb-item:hover {
+background: var(–bg-elevated);
+color: var(–text-primary);
+}
+.sb-item.active {
+background: var(–blue-ghost);
+color: var(–blue-light);
+}
+.sb-item.active::before {
+content: ‘’;
+position: absolute;
+left: 0;
+top: 50%;
+transform: translateY(-50%);
+width: 3px;
+height: 60%;
+background: var(–blue-light);
+border-radius: 0 2px 2px 0;
+margin-left: -8px;
+}
+.sb-icon {
+width: 20px;
+height: 20px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 16px;
+flex-shrink: 0;
+}
+.sb-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.sb-badge {
+background: var(–blue);
+color: #fff;
+font-size: 10px;
+font-weight: 700;
+padding: 1px 6px;
+border-radius: 10px;
+font-family: var(–font-mono);
+flex-shrink: 0;
+min-width: 18px;
+text-align: center;
+}
+
+/* Bottom user card */
+.sb-user {
+padding: 12px;
+border-top: 1px solid var(–border);
+display: flex;
+align-items: center;
+gap: 10px;
+flex-shrink: 0;
+overflow: hidden;
+}
+.sb-avatar {
+width: 36px;
+height: 36px;
+border-radius: 50%;
+background: var(–blue);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 13px;
+font-weight: 700;
+flex-shrink: 0;
+color: #fff;
+box-shadow: 0 0 10px rgba(37,99,235,0.3);
+}
+.sb-user-info { overflow: hidden; flex: 1; }
+.sb-user-name { font-size: 13px; font-weight: 600; color: var(–text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-user-role { font-size: 11px; color: var(–text-muted); font-family: var(–font-mono); letter-spacing: 0.5px; }
+.sb-user-status {
+width: 8px; height: 8px; border-radius: 50%;
+background: var(–green); flex-shrink: 0;
+box-shadow: 0 0 6px var(–green);
+animation: pulse-green 2s ease-in-out infinite;
+}
+@keyframes pulse-green { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* ════════════════════════════════════════════
+MAIN AREA
+════════════════════════════════════════════ */
+#main {
+flex: 1;
+height: 100%;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+min-width: 0;
+}
+
+/* Top header */
+#topbar {
+height: 64px;
+background: var(–bg-surface);
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+padding: 0 24px;
+gap: 20px;
+flex-shrink: 0;
+}
+.tb-page-info { flex: 1; min-width: 0; }
+.tb-page-title {
+font-size: 18px;
+font-weight: 700;
+color: var(–text-primary);
+letter-spacing: -0.3px;
+line-height: 1;
+}
+.tb-breadcrumb {
+font-size: 12px;
+color: var(–text-muted);
+margin-top: 3px;
+font-family: var(–font-mono);
+letter-spacing: 0.5px;
+}
+.tb-widgets { display: flex; align-items: center; gap: 12px; }
+.tb-widget {
+display: flex;
+align-items: center;
+gap: 8px;
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 8px 14px;
+cursor: pointer;
+transition: border-color 0.2s;
+white-space: nowrap;
+}
+.tb-widget:hover { border-color: var(–border-strong); }
+.tb-widget-label { font-size: 11px; color: var(–text-muted); font-family: var(–font-mono); }
+.tb-widget-val { font-size: 13px; font-weight: 600; color: var(–text-primary); }
+.net-status-wrap { display: flex; align-items: center; gap: 6px; }
+.net-dot {
+width: 8px; height: 8px; border-radius: 50%;
+background: var(–green);
+box-shadow: 0 0 6px var(–green);
+animation: pulse-green 2s infinite;
+}
+.net-dot.warn { background: var(–amber); box-shadow: 0 0 6px var(–amber); }
+.net-dot.bad { background: var(–red); box-shadow: 0 0 6px var(–red); }
+
+/* Content area */
+#content {
+flex: 1;
+overflow: hidden;
+position: relative;
+background: var(–bg-base);
+}
+
+/* Views */
+.view {
+position: absolute;
+inset: 0;
+overflow-y: auto;
+display: none;
+animation: fadeUp 0.25s ease forwards;
+}
+.view.active { display: block; }
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(6px); }
+to   { opacity: 1; transform: translateY(0); }
+}
+.view-pad { padding: 28px; }
+
+/* ════════════════════════════════════════════
+TYPOGRAPHY & COMMON ELEMENTS
+════════════════════════════════════════════ */
+.page-hd {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+margin-bottom: 24px;
+gap: 16px;
+}
+.page-hd-left h2 {
+font-size: 22px;
+font-weight: 700;
+color: var(–text-primary);
+letter-spacing: -0.4px;
+}
+.page-hd-left p {
+font-size: 13px;
+color: var(–text-secondary);
+margin-top: 3px;
+}
+.page-hd-right { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+.section-label {
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(–text-muted);
+font-family: var(–font-mono);
+margin-bottom: 12px;
+}
+
+/* Cards */
+.card {
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 12px;
+overflow: hidden;
+}
+.card-hd {
+padding: 16px 20px;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.card-hd h3 {
+font-size: 14px;
+font-weight: 600;
+color: var(–text-primary);
+letter-spacing: -0.2px;
+}
+.card-hd .card-hd-meta {
+font-size: 11px;
+color: var(–text-muted);
+font-family: var(–font-mono);
+}
+.card-body { padding: 20px; }
+.card:hover { border-color: var(–border-strong); }
+
+/* KPI Cards */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpi-card {
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px;
+position: relative;
+overflow: hidden;
+transition: border-color 0.2s, transform 0.15s;
+}
+.kpi-card:hover { border-color: var(–border-strong); transform: translateY(-1px); }
+.kpi-card::after {
+content: ‘’;
+position: absolute;
+bottom: 0; left: 0; right: 0;
+height: 2px;
+opacity: 0.8;
+}
+.kpi-card.blue::after { background: linear-gradient(90deg, transparent, var(–blue), transparent); }
+.kpi-card.green::after { background: linear-gradient(90deg, transparent, var(–green), transparent); }
+.kpi-card.amber::after { background: linear-gradient(90deg, transparent, var(–amber), transparent); }
+.kpi-card.violet::after { background: linear-gradient(90deg, transparent, var(–violet), transparent); }
+.kpi-card.cyan::after { background: linear-gradient(90deg, transparent, var(–cyan), transparent); }
+.kpi-label {
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(–text-muted);
+font-family: var(–font-mono);
+margin-bottom: 10px;
+}
+.kpi-value {
+font-size: 32px;
+font-weight: 800;
+letter-spacing: -1px;
+line-height: 1;
+}
+.kpi-card.blue .kpi-value { color: var(–blue-light); }
+.kpi-card.green .kpi-value { color: var(–green); }
+.kpi-card.amber .kpi-value { color: var(–amber); }
+.kpi-card.violet .kpi-value { color: var(–violet); }
+.kpi-card.cyan .kpi-value { color: var(–cyan); }
+.kpi-sub { font-size: 12px; color: var(–text-muted); margin-top: 6px; }
+
+/* Buttons */
+.btn {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 9px 18px;
+border-radius: 8px;
+font-size: 13px;
+font-weight: 600;
+letter-spacing: -0.1px;
+border: none;
+transition: all 0.15s;
+cursor: pointer;
+white-space: nowrap;
+}
+.btn-primary {
+background: var(–blue);
+color: #fff;
+box-shadow: 0 1px 3px rgba(37,99,235,0.3);
+}
+.btn-primary:hover { background: var(–blue-light); box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
+.btn-secondary {
+background: var(–bg-elevated);
+color: var(–text-secondary);
+border: 1px solid var(–border-strong);
+}
+.btn-secondary:hover { color: var(–text-primary); border-color: var(–blue-border); }
+.btn-success { background: var(–green); color: #fff; }
+.btn-success:hover { background: #0ea371; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+.btn-danger { background: var(–red); color: #fff; }
+.btn-danger:hover { box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+.btn-ghost {
+background: transparent;
+color: var(–text-secondary);
+border: 1px solid var(–border);
+padding: 8px 14px;
+}
+.btn-ghost:hover { color: var(–text-primary); border-color: var(–border-strong); background: var(–bg-elevated); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-icon { padding: 8px; border-radius: 8px; aspect-ratio: 1; }
+
+/* Badges / Pills */
+.badge {
+display: inline-flex;
+align-items: center;
+gap: 4px;
+padding: 3px 10px;
+border-radius: 20px;
+font-size: 11px;
+font-weight: 600;
+font-family: var(–font-mono);
+letter-spacing: 0.5px;
+text-transform: uppercase;
+white-space: nowrap;
+}
+.badge-blue { background: var(–blue-ghost); color: var(–blue-light); border: 1px solid var(–blue-border); }
+.badge-green { background: var(–green-ghost); color: var(–green); border: 1px solid var(–green-border); }
+.badge-amber { background: var(–amber-ghost); color: var(–amber); border: 1px solid rgba(245,158,11,0.3); }
+.badge-red { background: var(–red-ghost); color: var(–red); border: 1px solid var(–red-border); }
+.badge-violet { background: var(–violet-ghost); color: var(–violet); border: 1px solid rgba(139,92,246,0.3); }
+.badge-gray { background: rgba(71,85,105,0.2); color: var(–text-muted); border: 1px solid rgba(71,85,105,0.3); }
+.badge-cyan { background: var(–cyan-ghost); color: var(–cyan); border: 1px solid rgba(6,182,212,0.3); }
+
+/* Status dots */
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.status-dot.green { background: var(–green); box-shadow: 0 0 6px var(–green); }
+.status-dot.amber { background: var(–amber); box-shadow: 0 0 6px var(–amber); }
+.status-dot.red { background: var(–red); box-shadow: 0 0 6px var(–red); }
+.status-dot.blue { background: var(–blue-light); box-shadow: 0 0 6px var(–blue-light); }
+.status-dot.gray { background: var(–text-muted); }
+
+/* Tables */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+padding: 10px 16px;
+text-align: left;
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 1px;
+text-transform: uppercase;
+color: var(–text-muted);
+font-family: var(–font-mono);
+border-bottom: 1px solid var(–border);
+background: var(–bg-card);
+white-space: nowrap;
+}
+.data-table td {
+padding: 13px 16px;
+border-bottom: 1px solid var(–border);
+font-size: 13px;
+color: var(–text-secondary);
+background: var(–bg-card);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(–bg-card-hover); }
+.data-table td.primary { color: var(–text-primary); font-weight: 600; }
+.data-table td.money { color: var(–green); font-family: var(–font-mono); font-weight: 600; font-size: 14px; }
+.data-table td.mono { font-family: var(–font-mono); font-size: 12px; }
+
+/* Form elements */
+.form-group { margin-bottom: 16px; }
+.form-label {
+display: block;
+font-size: 12px;
+font-weight: 600;
+color: var(–text-secondary);
+margin-bottom: 6px;
+letter-spacing: 0.3px;
+}
+.form-input, .form-select, .form-textarea {
+width: 100%;
+background: var(–bg-input);
+border: 1px solid var(–border-strong);
+border-radius: 8px;
+color: var(–text-primary);
+padding: 10px 14px;
+font-size: 13px;
+font-family: var(–font-display);
+outline: none;
+transition: border-color 0.15s, box-shadow 0.15s;
+appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+border-color: var(–border-focus);
+box-shadow: var(–shadow-blue);
+}
+.form-select option { background: var(–bg-elevated); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* Divider */
+.divider { height: 1px; background: var(–border); margin: 20px 0; }
+
+/* Empty state */
+.empty-state {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 60px 20px;
+text-align: center;
+color: var(–text-muted);
+gap: 10px;
+}
+.empty-state .empty-icon { font-size: 36px; opacity: 0.5; }
+.empty-state .empty-title { font-size: 15px; font-weight: 600; color: var(–text-secondary); }
+.empty-state .empty-sub { font-size: 13px; max-width: 280px; line-height: 1.6; }
+
+/* Loading spinner */
+.spinner {
+width: 32px; height: 32px;
+border: 3px solid var(–border-strong);
+border-top-color: var(–blue-light);
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 60px; }
+.loading-text { font-size: 13px; color: var(–text-muted); font-family: var(–font-mono); letter-spacing: 1px; }
+
+/* ════════════════════════════════════════════
+MODAL
+════════════════════════════════════════════ */
+.modal-backdrop {
+position: fixed; inset: 0;
+background: rgba(7,11,20,0.82);
+backdrop-filter: blur(6px);
+z-index: 1000;
+display: none;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+.modal-backdrop.open { display: flex; animation: fadein 0.2s ease; }
+@keyframes fadein { from{opacity:0} to{opacity:1} }
+.modal {
+background: var(–bg-card);
+border: 1px solid var(–border-strong);
+border-radius: 16px;
+width: 520px;
+max-width: 100%;
+max-height: 90vh;
+overflow-y: auto;
+box-shadow: var(–shadow-lg);
+animation: slideUp 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(16px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+.modal-header {
+padding: 22px 24px 18px;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.modal-title { font-size: 17px; font-weight: 700; color: var(–text-primary); letter-spacing: -0.3px; }
+.modal-close {
+width: 30px; height: 30px;
+background: var(–bg-elevated);
+border: 1px solid var(–border);
+border-radius: 6px;
+display: flex; align-items: center; justify-content: center;
+font-size: 16px; color: var(–text-muted); cursor: pointer; transition: all 0.15s;
+}
+.modal-close:hover { background: var(–red-ghost); border-color: var(–red-border); color: var(–red); }
+.modal-body { padding: 24px; }
+.modal-footer {
+padding: 16px 24px;
+border-top: 1px solid var(–border);
+display: flex; gap: 8px; justify-content: flex-end;
+}
+
+/* ════════════════════════════════════════════
+TOAST NOTIFICATIONS
+════════════════════════════════════════════ */
+#toast-container {
+position: fixed;
+bottom: 24px;
+right: 24px;
+z-index: 9999;
+display: flex;
+flex-direction: column;
+gap: 8px;
+pointer-events: none;
+}
+.toast {
+background: var(–bg-elevated);
+border: 1px solid var(–border-strong);
+border-radius: 10px;
+padding: 12px 18px;
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 13px;
+color: var(–text-primary);
+box-shadow: var(–shadow-md);
+animation: toastIn 0.3s ease;
+pointer-events: all;
+max-width: 320px;
+}
+.toast.success { border-left: 3px solid var(–green); }
+.toast.error { border-left: 3px solid var(–red); }
+.toast.info { border-left: 3px solid var(–blue-light); }
+@keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+/* ════════════════════════════════════════════
+DASHBOARD VIEW
+════════════════════════════════════════════ */
+.db-two-col { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+.activity-item {
+display: flex;
+align-items: center;
+gap: 14px;
+padding: 13px 0;
+border-bottom: 1px solid var(–border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-icon {
+width: 34px; height: 34px; border-radius: 9px;
+display: flex; align-items: center; justify-content: center;
+font-size: 15px; flex-shrink: 0;
+}
+.activity-content { flex: 1; min-width: 0; }
+.activity-title { font-size: 13px; font-weight: 600; color: var(–text-primary); }
+.activity-sub { font-size: 12px; color: var(–text-muted); margin-top: 2px; font-family: var(–font-mono); }
+.activity-time { font-size: 11px; color: var(–text-muted); font-family: var(–font-mono); white-space: nowrap; }
+
+/* ════════════════════════════════════════════
+MAP VIEW
+════════════════════════════════════════════ */
+#view-map { padding: 0 !important; overflow: hidden; }
+.map-shell { display: flex; width: 100%; height: 100%; }
+.map-sidebar {
+width: 300px;
+flex-shrink: 0;
+background: var(–bg-surface);
+border-right: 1px solid var(–border);
+display: flex;
+flex-direction: column;
+height: 100%;
+}
+.map-sidebar-hd {
+padding: 16px 18px;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.map-sidebar-hd h3 { font-size: 14px; font-weight: 700; color: var(–text-primary); }
+.map-tools {
+padding: 12px 14px;
+border-bottom: 1px solid var(–border);
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+}
+.map-tool {
+flex: 1; min-width: 70px;
+background: var(–bg-elevated);
+border: 1px solid var(–border-strong);
+border-radius: 7px;
+color: var(–text-secondary);
+padding: 8px 10px;
+font-size: 12px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.15s;
+text-align: center;
+font-family: var(–font-display);
+}
+.map-tool:hover { border-color: var(–blue-border); color: var(–blue-light); background: var(–blue-ghost); }
+.map-tool.active { border-color: var(–blue-light); color: var(–blue-light); background: var(–blue-ghost); }
+.map-tool.danger:hover { border-color: var(–red-border); color: var(–red); background: var(–red-ghost); }
+
+.map-stats {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 0;
+border-bottom: 1px solid var(–border);
+}
+.map-stat {
+padding: 10px 0;
+text-align: center;
+border-right: 1px solid var(–border);
+}
+.map-stat:last-child { border-right: none; }
+.map-stat-val { font-size: 18px; font-weight: 800; color: var(–text-primary); }
+.map-stat-lbl { font-size: 10px; color: var(–text-muted); font-family: var(–font-mono); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+.pins-scroll { flex: 1; overflow-y: auto; }
+.pin-row {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 11px 16px;
+border-bottom: 1px solid var(–border);
+cursor: pointer;
+transition: background 0.12s;
+}
+.pin-row:hover { background: var(–bg-elevated); }
+.pin-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pin-info { flex: 1; min-width: 0; }
+.pin-name { font-size: 13px; font-weight: 600; color: var(–text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pin-addr { font-size: 11px; color: var(–text-muted); font-family: var(–font-mono); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.map-main { flex: 1; position: relative; }
+#leaflet-map { width: 100%; height: 100%; }
+.map-overlay-hint {
+position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+z-index: 500;
+background: rgba(37,99,235,0.92);
+color: #fff;
+padding: 9px 20px;
+border-radius: 8px;
+font-size: 12px;
+font-family: var(–font-mono);
+letter-spacing: 0.5px;
+display: none;
+box-shadow: var(–shadow-md);
+white-space: nowrap;
+}
+.map-loader {
+position: absolute; inset: 0; z-index: 600;
+background: rgba(7,11,20,0.75);
+display: none;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 14px;
+backdrop-filter: blur(4px);
+}
+.map-loader.show { display: flex; }
+.map-loader-text { font-size: 13px; color: var(–blue-light); font-family: var(–font-mono); letter-spacing: 1px; }
+.map-legend {
+position: absolute; bottom: 20px; right: 10px; z-index: 400;
+background: rgba(13,18,32,0.94);
+border: 1px solid var(–border-strong);
+border-radius: 10px;
+padding: 14px 16px;
+backdrop-filter: blur(6px);
+min-width: 160px;
+}
+.map-legend h4 { font-size: 11px; color: var(–text-muted); font-family: var(–font-mono); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.leg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: var(–text-secondary); }
+.leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Pin status colors */
+.pin-nh { background: #475569; }
+.pin-new { background: #3b82f6; }
+.pin-contact { background: #f59e0b; }
+.pin-appt { background: #8b5cf6; }
+.pin-sold { background: #10b981; }
+.pin-no { background: #ef4444; }
+
+/* ════════════════════════════════════════════
+CALENDAR VIEW
+════════════════════════════════════════════ */
+.cal-shell { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+.cal-nav-row { display: flex; align-items: center; gap: 10px; }
+.cal-arrow { background: var(–bg-elevated); border: 1px solid var(–border-strong); border-radius: 7px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(–text-secondary); transition: all 0.15s; }
+.cal-arrow:hover { border-color: var(–blue-border); color: var(–blue-light); }
+.cal-month-lbl { font-size: 13px; font-weight: 600; color: var(–text-primary); min-width: 140px; text-align: center; font-family: var(–font-mono); letter-spacing: 0.5px; }
+.cal-grid-hd { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
+.cal-day-hd { text-align: center; padding: 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(–text-muted); font-family: var(–font-mono); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-cell {
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 8px;
+min-height: 90px;
+padding: 8px;
+cursor: pointer;
+transition: border-color 0.15s;
+position: relative;
+}
+.cal-cell:hover { border-color: var(–blue-border); background: var(–bg-card-hover); }
+.cal-cell.today { border-color: var(–blue-light); background: var(–blue-ghost); }
+.cal-cell.other-month { background: var(–bg-surface); opacity: 0.5; cursor: default; }
+.cal-cell.other-month:hover { border-color: var(–border); background: var(–bg-surface); }
+.cal-day-num { font-size: 12px; font-family: var(–font-mono); color: var(–text-muted); margin-bottom: 4px; }
+.cal-cell.today .cal-day-num { color: var(–blue-light); font-weight: 700; }
+.cal-appt-pill {
+display: block;
+border-radius: 4px;
+padding: 2px 6px;
+margin-bottom: 3px;
+font-size: 10px;
+font-weight: 600;
+overflow: hidden;
+white-space: nowrap;
+text-overflow: ellipsis;
+}
+.appt-demo { background: var(–violet-ghost); color: var(–violet); border-left: 2px solid var(–violet); }
+.appt-followup { background: var(–amber-ghost); color: var(–amber); border-left: 2px solid var(–amber); }
+.appt-close { background: var(–green-ghost); color: var(–green); border-left: 2px solid var(–green); }
+.appt-visit { background: var(–blue-ghost); color: var(–blue-light); border-left: 2px solid var(–blue-light); }
+.appt-item {
+padding: 14px 18px;
+border-bottom: 1px solid var(–border);
+cursor: pointer;
+transition: background 0.12s;
+}
+.appt-item:hover { background: var(–bg-elevated); }
+.appt-item-time { font-size: 11px; color: var(–blue-light); font-family: var(–font-mono); font-weight: 600; margin-bottom: 4px; }
+.appt-item-name { font-size: 13px; font-weight: 600; color: var(–text-primary); }
+.appt-item-detail { font-size: 12px; color: var(–text-muted); margin-top: 2px; }
+
+/* ════════════════════════════════════════════
+LEADERBOARD
+════════════════════════════════════════════ */
+.lb-podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+.lb-podium-card {
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px;
+text-align: center;
+position: relative;
+overflow: hidden;
+transition: transform 0.15s;
+}
+.lb-podium-card:hover { transform: translateY(-2px); border-color: var(–border-strong); }
+.lb-podium-card.gold { border-color: rgba(245,158,11,0.4); background: linear-gradient(135deg, var(–bg-card), rgba(245,158,11,0.05)); }
+.lb-podium-card.silver { border-color: rgba(148,163,184,0.3); }
+.lb-podium-card.bronze { border-color: rgba(205,127,50,0.3); }
+.lb-medal { font-size: 28px; margin-bottom: 10px; }
+.lb-podium-avatar {
+width: 52px; height: 52px; border-radius: 50%;
+margin: 0 auto 10px;
+display: flex; align-items: center; justify-content: center;
+font-size: 18px; font-weight: 800;
+border: 2px solid;
+}
+.lb-podium-name { font-size: 15px; font-weight: 700; color: var(–text-primary); }
+.lb-podium-area { font-size: 11px; color: var(–text-muted); font-family: var(–font-mono); margin-top: 3px; margin-bottom: 12px; }
+.lb-podium-amt { font-size: 24px; font-weight: 900; color: var(–green); letter-spacing: -0.5px; }
+.lb-podium-closes { font-size: 12px; color: var(–text-muted); font-family: var(–font-mono); margin-top: 4px; }
+
+/* ════════════════════════════════════════════
+AREAS & TEAM CARDS
+════════════════════════════════════════════ */
+.area-card {
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px;
+position: relative;
+overflow: hidden;
+transition: border-color 0.2s, transform 0.15s;
+cursor: default;
+}
+.area-card:hover { border-color: var(–border-strong); transform: translateY(-1px); }
+.area-stripe {
+position: absolute; top: 0; left: 0;
+width: 4px; height: 100%;
+}
+.area-name { font-size: 16px; font-weight: 700; color: var(–text-primary); margin-bottom: 4px; }
+.area-meta { font-size: 12px; color: var(–text-muted); font-family: var(–font-mono); margin-bottom: 14px; }
+.area-stats { display: flex; gap: 20px; }
+.area-stat-val { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.area-stat-lbl { font-size: 10px; color: var(–text-muted); font-family: var(–font-mono); text-transform: uppercase; letter-spacing: 1px; }
+.area-progress { height: 3px; background: var(–bg-elevated); border-radius: 2px; margin-top: 14px; }
+.area-progress-fill { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+.area-notes { font-size: 12px; color: var(–text-muted); margin-top: 10px; line-height: 1.5; }
+
+.team-card {
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px;
+transition: border-color 0.2s, transform 0.15s;
+}
+.team-card:hover { border-color: var(–border-strong); transform: translateY(-1px); }
+.team-card-top {
+display: flex; align-items: center; gap: 14px;
+padding-bottom: 16px; margin-bottom: 16px;
+border-bottom: 1px solid var(–border);
+}
+.team-avatar {
+width: 48px; height: 48px; border-radius: 12px;
+display: flex; align-items: center; justify-content: center;
+font-size: 16px; font-weight: 800;
+flex-shrink: 0; border: 1px solid;
+}
+.team-name { font-size: 15px; font-weight: 700; color: var(–text-primary); }
+.team-role { font-size: 11px; font-family: var(–font-mono); color: var(–text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.team-area-lbl { font-size: 12px; color: var(–blue-light); margin-top: 3px; }
+.team-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.team-metric-val { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
+.team-metric-lbl { font-size: 10px; color: var(–text-muted); font-family: var(–font-mono); text-transform: uppercase; letter-spacing: 1px; }
+
+/* ════════════════════════════════════════════
+WEATHER VIEW
+════════════════════════════════════════════ */
+.wx-hero {
+display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; margin-bottom: 20px;
+}
+.wx-current {
+background: linear-gradient(135deg, var(–bg-card), rgba(37,99,235,0.08));
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 28px;
+display: flex; align-items: center; gap: 24px;
+}
+.wx-icon-big { font-size: 72px; line-height: 1; }
+.wx-temp-big { font-size: 56px; font-weight: 900; letter-spacing: -2px; color: var(–text-primary); line-height: 1; }
+.wx-condition { font-size: 18px; font-weight: 600; color: var(–blue-light); margin-top: 6px; }
+.wx-location { font-size: 12px; color: var(–text-muted); font-family: var(–font-mono); margin-top: 5px; letter-spacing: 0.5px; }
+.wx-feels { font-size: 13px; color: var(–text-secondary); margin-top: 4px; }
+.wx-details-card {
+background: var(–bg-card);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px;
+}
+.wx-detail-row {
+display: flex; justify-content: space-between; align-items: center;
+padding: 9px 0; border-bottom: 1px solid var(–border);
+}
+.wx-detail-row:last-child { border-bottom: none; }
+.wx-detail-label { font-size: 13px; color: var(–text-secondary); }
+.wx-detail-val { font-size: 13px; font-weight: 600; font-family: var(–font-mono); color: var(–text-primary); }
+.fc-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; margin-bottom: 20px; }
+.fc-card {
+background: var(–bg-card); border: 1px solid var(–border);
+border-radius: 10px; padding: 14px 8px; text-align: center;
+transition: border-color 0.15s;
+}
+.fc-card:hover { border-color: var(–border-strong); }
+.fc-day { font-size: 11px; font-family: var(–font-mono); color: var(–text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.fc-icon-big { font-size: 24px; margin-bottom: 8px; }
+.fc-hi { font-size: 16px; font-weight: 700; color: var(–text-primary); }
+.fc-lo { font-size: 12px; color: var(–text-muted); font-family: var(–font-mono); margin-top: 2px; }
+.wx-alert-bar {
+background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+border-radius: 10px; padding: 14px 18px; margin-bottom: 18px;
+display: flex; gap: 12px; align-items: flex-start;
+}
+.wx-alert-icon { font-size: 20px; flex-shrink: 0; }
+.wx-alert-text { font-size: 13px; color: var(–amber); line-height: 1.6; }
+.wx-impact {
+background: var(–bg-card); border: 1px solid var(–border); border-radius: 12px; padding: 20px;
+}
+.wx-impact h3 { font-size: 13px; font-weight: 600; color: var(–text-secondary); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; font-family: var(–font-mono); }
+.wx-impact-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.impact-item {
+background: var(–bg-elevated); border: 1px solid var(–border); border-radius: 10px;
+padding: 14px; text-align: center;
+}
+.impact-icon { font-size: 22px; margin-bottom: 6px; }
+.impact-label { font-size: 10px; color: var(–text-muted); font-family: var(–font-mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.impact-val { font-size: 14px; font-weight: 700; }
+.impact-good { color: var(–green); }
+.impact-ok { color: var(–amber); }
+.impact-bad { color: var(–red); }
+
+/* ════════════════════════════════════════════
+CRIME VIEW
+════════════════════════════════════════════ */
+#crime-map-container {
+border: 1px solid var(–border); border-radius: 12px;
+overflow: hidden; height: 380px; margin-bottom: 16px;
+}
+.crime-filters { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.crime-filter-btn {
+background: var(–bg-elevated); border: 1px solid var(–border-strong);
+border-radius: 7px; color: var(–text-secondary); padding: 7px 14px;
+font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+font-family: var(–font-display);
+}
+.crime-filter-btn:hover, .crime-filter-btn.active {
+background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.4); color: var(–amber);
+}
+.crime-info-bar {
+background: var(–bg-card); border: 1px solid var(–border); border-radius: 10px;
+padding: 12px 16px; margin-bottom: 12px; font-size: 13px; color: var(–text-secondary); line-height: 1.6;
+}
+.crime-info-bar.ok { border-color: var(–green-border); color: var(–green); background: var(–green-ghost); }
+.crime-info-bar.err { border-color: var(–red-border); color: var(–red); background: var(–red-ghost); }
+
+/* ════════════════════════════════════════════
+SERVICE STATUS VIEW
+════════════════════════════════════════════ */
+.svc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+.svc-card {
+background: var(–bg-card); border: 1px solid var(–border); border-radius: 12px; padding: 18px;
+transition: border-color 0.2s;
+}
+.svc-card:hover { border-color: var(–border-strong); }
+.svc-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.svc-name { font-size: 14px; font-weight: 600; color: var(–text-primary); }
+.svc-desc { font-size: 12px; color: var(–text-muted); font-family: var(–font-mono); margin-top: 2px; }
+.svc-sparkline { height: 48px; display: flex; align-items: flex-end; gap: 2px; margin-bottom: 10px; }
+.svc-spark-bar { flex: 1; border-radius: 2px; min-height: 3px; transition: height 0.3s; }
+.svc-bottom { display: flex; justify-content: space-between; font-size: 11px; font-family: var(–font-mono); color: var(–text-muted); }
+.svc-bottom .ok { color: var(–green); font-weight: 700; }
+.svc-bottom .down { color: var(–red); font-weight: 700; }
+.svc-bottom .chk { color: var(–amber); font-weight: 700; }
+.ov-status-banner {
+border-radius: 12px; padding: 18px 22px; margin-bottom: 20px;
+display: flex; align-items: center; gap: 16px;
+background: var(–bg-card); border: 1px solid var(–border);
+}
+.ov-status-banner.all-ok { border-color: var(–green-border); background: var(–green-ghost); }
+.ov-status-banner.issues { border-color: rgba(245,158,11,0.3); background: var(–amber-ghost); }
+.ov-banner-icon { font-size: 26px; }
+.ov-banner-title { font-size: 16px; font-weight: 700; }
+.ov-banner-sub { font-size: 12px; color: var(–text-muted); font-family: var(–font-mono); margin-top: 2px; }
+.ov-status-banner.all-ok .ov-banner-title { color: var(–green); }
+.ov-status-banner.issues .ov-banner-title { color: var(–amber); }
+
+/* Log table */
+.log-row {
+display: grid; grid-template-columns: 120px 1fr 80px; gap: 16px;
+align-items: center; padding: 12px 16px; border-bottom: 1px solid var(–border);
+font-size: 13px;
+}
+.log-row:last-child { border-bottom: none; }
+.log-row .log-time { font-family: var(–font-mono); font-size: 11px; color: var(–text-muted); }
+.log-row .log-msg { color: var(–text-secondary); }
+.log-row .log-score { font-family: var(–font-mono); font-size: 11px; text-align: right; font-weight: 600; }
+
+/* ════════════════════════════════════════════
+RESPONSIVE
+════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+:root { –sidebar-w: 200px; }
+.kpi-grid { grid-template-columns: repeat(2,1fr); }
+.db-two-col { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+#sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 200; transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
+#sidebar.mobile-open { transform: translateX(0); width: var(–sidebar-w) !important; }
+#main { width: 100%; }
+.svc-grid, .cards-grid { grid-template-columns: 1fr 1fr; }
+.wx-hero { grid-template-columns: 1fr; }
+.cal-shell { grid-template-columns: 1fr; }
+.fc-row { grid-template-columns: repeat(4,1fr); }
+.lb-podium { grid-template-columns: 1fr; }
+}
+
+.cards-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+@media(max-width:1100px){ .cards-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:700px){ .cards-grid { grid-template-columns: 1fr; } }
+</style>
+
+</head>
+<body>
+<div id="shell">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+
+  <nav id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏠</div>
+      <div class="sb-logo-text">
+        <div class="sb-logo-title">Complete Home</div>
+        <div class="sb-logo-sub">Field Ops Platform</div>
+      </div>
+    </div>
+    <button class="sb-toggle" onclick="toggleSidebar()" title="Toggle sidebar">◀</button>
+
+```
+<div class="sb-nav">
+  <div class="sb-group-label">Overview</div>
+  <button class="sb-item active" onclick="showView('dashboard',this)">
+    <span class="sb-icon">⬛</span><span class="sb-label">Dashboard</span>
+  </button>
+
+  <div class="sb-group-label">Field Operations</div>
+  <button class="sb-item" onclick="showView('map',this)">
+    <span class="sb-icon">📍</span><span class="sb-label">Live Map</span>
+    <span class="sb-badge" id="sb-pin-count">0</span>
+  </button>
+  <button class="sb-item" onclick="showView('calendar',this)">
+    <span class="sb-icon">📅</span><span class="sb-label">Calendar</span>
+    <span class="sb-badge" id="sb-appt-count" style="display:none">0</span>
+  </button>
+  <button class="sb-item" onclick="showView('areas',this)">
+    <span class="sb-icon">🗺</span><span class="sb-label">Territory Areas</span>
+  </button>
+
+  <div class="sb-group-label">Performance</div>
+  <button class="sb-item" onclick="showView('sales',this)">
+    <span class="sb-icon">💰</span><span class="sb-label">Sales Log</span>
+  </button>
+  <button class="sb-item" onclick="showView('leaderboard',this)">
+    <span class="sb-icon">🏆</span><span class="sb-label">Leaderboard</span>
+  </button>
+  <button class="sb-item" onclick="showView('teams',this)">
+    <span class="sb-icon">👥</span><span class="sb-label">Team</span>
+  </button>
+
+  <div class="sb-group-label">Intelligence</div>
+  <button class="sb-item" onclick="showView('weather',this)">
+    <span class="sb-icon">🌤</span><span class="sb-label">Weather</span>
+  </button>
+  <button class="sb-item" onclick="showView('crime',this)">
+    <span class="sb-icon">🚨</span><span class="sb-label">Crime Map</span>
+  </button>
+  <button class="sb-item" onclick="showView('status',this)">
+    <span class="sb-icon">⚡</span><span class="sb-label">Service Status</span>
+    <span class="sb-badge" id="sb-status-dot" style="background:var(--green);font-size:8px;padding:0;width:10px;height:10px;border-radius:50%;min-width:10px"></span>
+  </button>
+</div>
+
+<div class="sb-user">
+  <div class="sb-avatar">D</div>
+  <div class="sb-user-info">
+    <div class="sb-user-name">Darrell</div>
+    <div class="sb-user-role">Complete Home CEO</div>
+  </div>
+  <div class="sb-user-status"></div>
+</div>
+```
+
+  </nav>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+
+  <div id="main">
+    <!-- Topbar -->
+    <div id="topbar">
+      <div class="tb-page-info">
+        <div class="tb-page-title" id="page-title">Dashboard</div>
+        <div class="tb-breadcrumb" id="page-crumb">Complete Home · Field Operations Platform</div>
+      </div>
+      <div class="tb-widgets">
+        <div class="tb-widget" onclick="showView('weather')" style="cursor:pointer">
+          <span id="top-wx-icon">🌤</span>
+          <div>
+            <div class="tb-widget-label">Salinas, CA</div>
+            <div class="tb-widget-val"><span id="top-wx-temp">--°F</span> <span id="top-wx-cond" style="font-size:11px;color:var(--text-muted);font-weight:400"></span></div>
+          </div>
+        </div>
+        <div class="tb-widget">
+          <div class="net-status-wrap">
+            <div class="net-dot" id="net-indicator"></div>
+            <div>
+              <div class="tb-widget-label">Network</div>
+              <div class="tb-widget-val" id="net-label" style="font-size:12px">Online</div>
+            </div>
+          </div>
+        </div>
+        <div class="tb-widget" style="gap:10px">
+          <div class="sb-avatar" style="width:32px;height:32px;font-size:12px">D</div>
+          <div>
+            <div class="tb-widget-val" style="font-size:13px">Darrell</div>
+            <div class="tb-widget-label">Complete Home CEO</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+```
+<!-- Content area -->
+<div id="content">
+
+  <!-- ──────────── DASHBOARD ──────────── -->
+  <div class="view active view-pad" id="view-dashboard">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>Good morning, Darrell 👋</h2>
+        <p>Here's what's happening across your Complete Home operations today.</p>
+      </div>
+      <div class="page-hd-right">
+        <button class="btn btn-primary" onclick="showView('map')">📍 Open Map</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Pins Dropped</div>
+        <div class="kpi-value" id="db-pins">0</div>
+        <div class="kpi-sub">Doors worked all time</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value" id="db-revenue">$0</div>
+        <div class="kpi-sub">From logged sales</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Appointments</div>
+        <div class="kpi-value" id="db-appts">0</div>
+        <div class="kpi-sub">Scheduled total</div>
+      </div>
+      <div class="kpi-card violet">
+        <div class="kpi-label">Close Rate</div>
+        <div class="kpi-value" id="db-rate">0%</div>
+        <div class="kpi-sub">Sold ÷ pins</div>
+      </div>
+    </div>
+    <div class="db-two-col">
+      <div class="card">
+        <div class="card-hd">
+          <h3>Recent Activity</h3>
+          <span class="card-hd-meta" style="display:flex;align-items:center;gap:6px"><span class="status-dot green"></span> Live</span>
+        </div>
+        <div class="card-body" id="db-activity">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">No activity yet</div>
+            <div class="empty-sub">Actions you take—pins, sales, appointments—will appear here in real time.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h3>Today's Appointments</h3></div>
+        <div id="db-today-appts">
+          <div class="empty-state" style="padding:40px 20px">
+            <div class="empty-icon">📅</div>
+            <div class="empty-title">No appointments today</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────── MAP ──────────── -->
+  <div class="view" id="view-map">
+    <div class="map-shell">
+      <div class="map-sidebar">
+        <div class="map-sidebar-hd">
+          <h3>Lead Manager</h3>
+          <span class="badge badge-blue" id="map-total-badge">0 pins</span>
+        </div>
+        <div class="map-tools">
+          <button class="map-tool active" id="tool-pin" onclick="setMapTool('pin',this)">📍 Drop Pin</button>
+          <button class="map-tool" id="tool-lasso" onclick="setMapTool('lasso',this)">✏️ Lasso Area</button>
+          <button class="map-tool danger" onclick="clearAllPins()">🗑 Clear All</button>
+        </div>
+        <div class="map-stats">
+          <div class="map-stat"><div class="map-stat-val" id="ms-total">0</div><div class="map-stat-lbl">Total</div></div>
+          <div class="map-stat"><div class="map-stat-val" style="color:var(--green)" id="ms-sold">0</div><div class="map-stat-lbl">Sold</div></div>
+          <div class="map-stat"><div class="map-stat-val" style="color:var(--violet)" id="ms-appt">0</div><div class="map-stat-lbl">Appts</div></div>
+          <div class="map-stat"><div class="map-stat-val" style="color:var(--text-muted)" id="ms-nh">0</div><div class="map-stat-lbl">N/H</div></div>
+        </div>
+        <div class="pins-scroll" id="pin-list-scroll">
+          <div class="empty-state" style="padding:40px 16px">
+            <div class="empty-icon" style="font-size:28px">📍</div>
+            <div class="empty-title" style="font-size:13px">No pins yet</div>
+            <div class="empty-sub" style="font-size:12px">Click the map to drop a pin, or use Lasso Area to auto-generate house pins.</div>
+          </div>
+        </div>
+      </div>
+      <div class="map-main">
+        <div id="leaflet-map"></div>
+        <div class="map-overlay-hint" id="lasso-hint">Click to add points — press Enter or re-click first point to finish</div>
+        <div class="map-loader" id="map-loader">
+          <div class="spinner"></div>
+          <div class="map-loader-text" id="map-loader-msg">Querying buildings...</div>
+        </div>
+        <div class="map-legend">
+          <h4>Pin Status</h4>
+          <div class="leg-row"><div class="leg-dot pin-nh"></div>Not Home</div>
+          <div class="leg-row"><div class="leg-dot pin-new"></div>New Lead</div>
+          <div class="leg-row"><div class="leg-dot pin-contact"></div>Contacted</div>
+          <div class="leg-row"><div class="leg-dot pin-appt"></div>Appointment</div>
+          <div class="leg-row"><div class="leg-dot pin-sold"></div>Sold</div>
+          <div class="leg-row"><div class="leg-dot pin-no"></div>Not Interested</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────── CALENDAR ──────────── -->
+  <div class="view view-pad" id="view-calendar">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2 id="cal-page-title">February 2026</h2>
+        <p>Manage your team's appointment schedule</p>
+      </div>
+      <div class="page-hd-right">
+        <div class="cal-nav-row">
+          <button class="cal-arrow" onclick="calNav(-1)">‹</button>
+          <div class="cal-month-lbl" id="cal-month-label">FEB 2026</div>
+          <button class="cal-arrow" onclick="calNav(1)">›</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openApptModal(null)">+ Appointment</button>
+      </div>
+    </div>
+    <div class="cal-shell">
+      <div>
+        <div class="cal-grid-hd" id="cal-hd"></div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="card" style="height:fit-content;max-height:calc(100vh - 240px);overflow-y:auto">
+        <div class="card-hd"><h3>Upcoming Appointments</h3></div>
+        <div id="appt-upcoming-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────── SALES ──────────── -->
+  <div class="view view-pad" id="view-sales">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>Sales Log</h2>
+        <p>Track every closed deal — Complete Home field operations</p>
+      </div>
+      <div class="page-hd-right">
+        <button class="btn btn-success" onclick="openSaleModal()">+ Log Sale</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px">
+      <div class="card">
+        <div class="card-hd"><h3>All Transactions</h3><span class="card-hd-meta" id="sales-count-hd">0 transactions</span></div>
+        <div id="sales-table-wrap">
+          <div class="empty-state" style="padding:60px 20px" id="sales-empty">
+            <div class="empty-icon">💰</div>
+            <div class="empty-title">No sales yet</div>
+            <div class="empty-sub">Log your first sale to start tracking revenue.</div>
+          </div>
+          <table class="data-table" id="sales-table" style="display:none">
+            <thead><tr><th>Date</th><th>Customer</th><th>Rep</th><th>Product</th><th>Amount</th></tr></thead>
+            <tbody id="sales-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="kpi-card green" style="border-radius:12px">
+          <div class="kpi-label">Total Revenue</div>
+          <div class="kpi-value" id="sales-total-rev">$0</div>
+          <div class="kpi-sub" id="sales-total-sub">0 transactions logged</div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>Revenue by Rep</h3></div>
+          <div class="card-body" id="sales-rep-bars">
+            <div class="empty-state" style="padding:30px">
+              <div class="empty-sub">No data yet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────── LEADERBOARD ──────────── -->
+  <div class="view view-pad" id="view-leaderboard">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>🏆 Sales Leaderboard</h2>
+        <p>Live rankings computed from your sales log</p>
+      </div>
+      <div class="page-hd-right">
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm lb-period-btn" onclick="setLBPeriod('all',this)">All Time</button>
+          <button class="btn btn-ghost btn-sm lb-period-btn" onclick="setLBPeriod('month',this)">This Month</button>
+          <button class="btn btn-ghost btn-sm lb-period-btn" onclick="setLBPeriod('week',this)">This Week</button>
+        </div>
+      </div>
+    </div>
+    <div id="lb-podium" class="lb-podium" style="display:none"></div>
+    <div class="card" style="margin-top:0">
+      <div class="card-hd"><h3>Full Rankings</h3></div>
+      <div id="lb-empty" class="empty-state">
+        <div class="empty-icon">🏆</div>
+        <div class="empty-title">No rankings yet</div>
+        <div class="empty-sub">Log sales to see the leaderboard come to life.</div>
+      </div>
+      <table class="data-table" id="lb-table" style="display:none">
+        <thead><tr><th>Rank</th><th>Rep</th><th>Territory</th><th>Revenue</th><th>Closes</th><th>Doors</th><th>Close Rate</th></tr></thead>
+        <tbody id="lb-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ──────────── AREAS ──────────── -->
+  <div class="view view-pad" id="view-areas">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>Territory Areas</h2>
+        <p>Define and manage canvassing zones across your Complete Home territory</p>
+      </div>
+      <div class="page-hd-right">
+        <button class="btn btn-primary" onclick="openAreaModal()">+ Add Territory</button>
+      </div>
+    </div>
+    <div class="cards-grid" id="areas-grid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">🗺</div>
+        <div class="empty-title">No territories defined</div>
+        <div class="empty-sub">Create your first territory to start assigning reps to specific areas.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────── TEAM ──────────── -->
+  <div class="view view-pad" id="view-teams">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>Team Management</h2>
+        <p>Manage your Complete Home field representatives</p>
+      </div>
+      <div class="page-hd-right">
+        <button class="btn btn-primary" onclick="openRepModal()">+ Add Rep</button>
+      </div>
+    </div>
+    <div class="cards-grid" id="team-grid"></div>
+  </div>
+
+  <!-- ──────────── WEATHER ──────────── -->
+  <div class="view view-pad" id="view-weather">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>Live Weather</h2>
+        <p id="wx-page-sub">Salinas / Monterey County, CA — Powered by wttr.in</p>
+      </div>
+      <div class="page-hd-right">
+        <button class="btn btn-ghost btn-sm" onclick="loadWeather(true)">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="wx-alert-area"></div>
+    <div id="wx-content">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <div class="loading-text">Fetching live weather data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────── CRIME ──────────── -->
+  <div class="view view-pad" id="view-crime">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>Crime Intelligence Map</h2>
+        <p>Recent incidents near Monterey County — SpotCrime data</p>
+      </div>
+      <div class="page-hd-right">
+        <button class="btn btn-ghost btn-sm" onclick="loadCrimeData(true)">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="crime-info-bar" id="crime-info-bar">📡 Initializing crime data feed...</div>
+    <div id="crime-map-container"></div>
+    <div class="crime-filters" id="crime-filters" style="display:none">
+      <button class="crime-filter-btn active" onclick="filterCrime('all',this)">All Types</button>
+      <button class="crime-filter-btn" onclick="filterCrime('theft',this)">Theft</button>
+      <button class="crime-filter-btn" onclick="filterCrime('burglary',this)">Burglary</button>
+      <button class="crime-filter-btn" onclick="filterCrime('assault',this)">Assault</button>
+      <button class="crime-filter-btn" onclick="filterCrime('vandalism',this)">Vandalism</button>
+      <button class="crime-filter-btn" onclick="filterCrime('other',this)">Other</button>
+    </div>
+    <div class="card" id="crime-list-card" style="display:none">
+      <div class="card-hd"><h3>Incident Log</h3><span class="card-hd-meta" id="crime-count-hd"></span></div>
+      <div id="crime-rows"></div>
+    </div>
+  </div>
+
+  <!-- ──────────── STATUS ──────────── -->
+  <div class="view view-pad" id="view-status">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h2>Service Status</h2>
+        <p>Real-time connectivity checks for all platform dependencies</p>
+      </div>
+      <div class="page-hd-right">
+        <button class="btn btn-ghost btn-sm" id="check-btn" onclick="runStatusChecks()">↻ Run Checks</button>
+      </div>
+    </div>
+    <div class="ov-status-banner" id="ov-banner">
+      <div class="ov-banner-icon">🔄</div>
+      <div><div class="ov-banner-title">Running initial checks...</div><div class="ov-banner-sub" id="ov-sub">Last checked: —</div></div>
+    </div>
+    <div class="svc-grid" id="svc-grid"></div>
+    <div class="card">
+      <div class="card-hd"><h3>Check History</h3><span class="card-hd-meta" id="log-count-hd"></span></div>
+      <div id="status-log"></div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+```
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- Pin / Lead Modal -->
+
+<div class="modal-backdrop" id="modal-pin">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📍 Lead Details</div>
+      <button class="modal-close" onclick="closeModal('modal-pin')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="pin-fname" placeholder="John"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="pin-lname" placeholder="Doe"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="pin-addr" readonly style="color:var(--text-muted)"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="pin-phone" placeholder="(831) 555-0100"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="pin-status">
+            <option value="nh">Not Home</option>
+            <option value="new">New Lead</option>
+            <option value="contact">Contacted</option>
+            <option value="appt">Appointment Set</option>
+            <option value="sold">Sold ✓</option>
+            <option value="no">Not Interested</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Assigned Rep</label><select class="form-select" id="pin-rep"></select></div>
+        <div class="form-group"><label class="form-label">Territory</label><select class="form-select" id="pin-area"></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="pin-notes" placeholder="Customer notes, objections, follow-up details..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-pin')">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="pin-delete-btn" onclick="deletePin()" style="display:none">Delete</button>
+      <button class="btn btn-primary" onclick="savePin()">Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- Appointment Modal -->
+
+<div class="modal-backdrop" id="modal-appt">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="appt-modal-title">📅 New Appointment</div>
+      <button class="modal-close" onclick="closeModal('modal-appt')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Customer Name</label><input class="form-input" id="appt-cust" placeholder="John Doe"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="appt-phone" placeholder="(831) 555-0100"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="appt-addr" placeholder="Customer address"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="appt-date"></div>
+        <div class="form-group"><label class="form-label">Time</label><input class="form-input" type="time" id="appt-time"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Appointment Type</label>
+          <select class="form-select" id="appt-type">
+            <option value="demo">Product Demo</option>
+            <option value="followup">Follow-up</option>
+            <option value="close">Close / Sign</option>
+            <option value="visit">Initial Visit</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Assigned Rep</label><select class="form-select" id="appt-rep"></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="appt-notes" placeholder="Additional notes..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-appt')">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="appt-delete-btn" onclick="deleteAppt()" style="display:none">Delete</button>
+      <button class="btn btn-primary" onclick="saveAppt()">Save Appointment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sale Modal -->
+
+<div class="modal-backdrop" id="modal-sale">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💰 Log New Sale</div>
+      <button class="modal-close" onclick="closeModal('modal-sale')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Customer Name</label><input class="form-input" id="sale-cust" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">Sale Date</label><input class="form-input" type="date" id="sale-date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="sale-addr" placeholder="Customer address"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Product / Package</label>
+          <select class="form-select" id="sale-product">
+            <option>Solar Basic (5kW)</option><option>Solar Plus (8kW)</option><option>Solar Premium (12kW)</option>
+            <option>Home Security Basic</option><option>Home Security Premium</option>
+            <option>Internet Package A</option><option>Internet Package B</option><option>Custom Package</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Amount ($)</label><input class="form-input" type="number" id="sale-amount" placeholder="5000" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Sales Rep</label><select class="form-select" id="sale-rep"></select></div>
+        <div class="form-group"><label class="form-label">Territory</label><select class="form-select" id="sale-area"></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-sale')">Cancel</button>
+      <button class="btn btn-success" onclick="saveSale()">Log Sale</button>
+    </div>
+  </div>
+</div>
+
+<!-- Area Modal -->
+
+<div class="modal-backdrop" id="modal-area">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🗺 Add Territory</div>
+      <button class="modal-close" onclick="closeModal('modal-area')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Territory Name</label><input class="form-input" id="area-name" placeholder="e.g. North Salinas"></div>
+        <div class="form-group"><label class="form-label">ZIP Code</label><input class="form-input" id="area-zip" placeholder="93901"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Assigned Rep</label><select class="form-select" id="area-rep"></select></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="area-notes" placeholder="Neighborhood type, population density, notes..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-area')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveArea()">Create Territory</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rep Modal -->
+
+<div class="modal-backdrop" id="modal-rep">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Add Team Member</div>
+      <button class="modal-close" onclick="closeModal('modal-rep')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="rep-fname" placeholder="First"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="rep-lname" placeholder="Last"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Role</label>
+          <select class="form-select" id="rep-role"><option value="rep">Sales Rep</option><option value="manager">Manager</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="rep-phone" placeholder="(831) 555-0100"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Assign to Territory</label><select class="form-select" id="rep-area"></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-rep')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRep()">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+
+<div id="toast-container"></div>
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════════
+   GLOBAL DATA STORE
+═══════════════════════════════════════════════ */
+const DB = {
+  pins:  [],
+  appts: [],
+  sales: [],
+  areas: [],
+  reps: [
+    {id:1, fname:'Darrell', lname:'', role:'CEO', phone:'', areaId:'', color:'#2563eb'},
+    {id:2, fname:'King',    lname:'Cannon', role:'manager', phone:'', areaId:'', color:'#8b5cf6'},
+    {id:3, fname:'Shafik',  lname:'Elafrangi', role:'manager', phone:'', areaId:'', color:'#f59e0b'},
+    {id:4, fname:'Sly',     lname:'Walker', role:'manager', phone:'', areaId:'', color:'#06b6d4'}
+  ]
+};
+const IDs = {pin:1, appt:1, sale:1, area:1, rep:5};
+const AREA_COLORS = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'];
+const STATUS_COLORS = {nh:'#475569',new:'#3b82f6',contact:'#f59e0b',appt:'#8b5cf6',sold:'#10b981',no:'#ef4444'};
+let activityLog = [];
+
+/* ═══════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════ */
+const $id = id => document.getElementById(id);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const repName = id => { const r = DB.reps.find(x=>x.id==id); return r ? `${r.fname} ${r.lname}`.trim() : '—'; };
+const repObj  = id => DB.reps.find(x=>x.id==id);
+const fmtTime = t => { if(!t)return''; const[h,m]=t.split(':'); const hr=+h; return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`; };
+const fmtMoney = n => '$' + (+n||0).toLocaleString();
+const timeSince = ts => { const s=Math.floor((Date.now()-ts)/1000); if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; };
+const initials = r => r ? (r.fname[0]||'')+(r.lname[0]||'') : '?';
+
+function toast(msg, type='info') {
+  const tc = $id('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(20px)'; t.style.transition='all .3s'; setTimeout(()=>t.remove(),300); }, 3500);
+}
+
+function openModal(id)  { $id(id).classList.add('open'); }
+function closeModal(id) { $id(id).classList.remove('open'); }
+document.querySelectorAll('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+function populateSelect(id, includeEmpty=true, emptyLabel='Select...') {
+  const el = $id(id); if(!el) return;
+  const prev = el.value;
+  const repOpts = DB.reps.map(r=>`<option value="${r.id}">${r.fname} ${r.lname} (${r.role})</option>`).join('');
+  el.innerHTML = (includeEmpty ? `<option value="">${emptyLabel}</option>` : '') + repOpts;
+  el.value = prev;
+}
+function populateAreaSelect(id) {
+  const el = $id(id); if(!el) return;
+  const prev = el.value;
+  const opts = DB.areas.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  el.innerHTML = '<option value="">No territory</option>' + opts;
+  el.value = prev;
+}
+function refreshAllSelects() {
+  ['pin-rep','appt-rep','sale-rep','area-rep','rep-area'].forEach(id => populateSelect(id));
+  ['pin-area','sale-area'].forEach(id => populateAreaSelect(id));
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+const PAGE_META = {
+  dashboard:   {title:'Dashboard',           crumb:'Overview · Complete Home Field Operations'},
+  map:         {title:'Live Map',            crumb:'Field Operations · Lead Management'},
+  calendar:    {title:'Appointment Calendar',crumb:'Field Operations · Scheduling'},
+  areas:       {title:'Territory Areas',     crumb:'Field Operations · Zone Management'},
+  sales:       {title:'Sales Log',           crumb:'Performance · Revenue Tracking'},
+  leaderboard: {title:'Leaderboard',         crumb:'Performance · Rankings & Metrics'},
+  teams:       {title:'Team Management',     crumb:'Performance · Field Representatives'},
+  weather:     {title:'Live Weather',        crumb:'Intelligence · Monterey County, CA'},
+  crime:       {title:'Crime Intelligence',  crumb:'Intelligence · Incident Map'},
+  status:      {title:'Service Status',      crumb:'System · Connectivity & Uptime'},
+};
+
+let sidebarCollapsed = false;
+
+function showView(name, _btn) {
+  // Hide all views, show target
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const target = $id(`view-${name}`);
+  if (!target) { console.warn('No view:', name); return; }
+  target.classList.add('active');
+
+  // Always highlight the matching sidebar item by its onclick attribute
+  document.querySelectorAll('.sb-item').forEach(b => {
+    b.classList.remove('active');
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${name}'`)) {
+      b.classList.add('active');
+    }
+  });
+
+  // Update topbar
+  const meta = PAGE_META[name] || {};
+  $id('page-title').textContent = meta.title || name;
+  $id('page-crumb').textContent = meta.crumb || '';
+
+  // Lazy-load per-view
+  if (name === 'map')         setTimeout(initMap, 150);
+  if (name === 'weather')     loadWeather(false);
+  if (name === 'crime')       loadCrimeData(false);
+  if (name === 'status')      runStatusChecks();
+  if (name === 'calendar')    renderCalendar();
+  if (name === 'sales')       renderSales();
+  if (name === 'leaderboard') renderLeaderboard();
+  if (name === 'areas')       renderAreas();
+  if (name === 'teams')       renderTeam();
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  $id('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+  document.querySelector('.sb-toggle').textContent = sidebarCollapsed ? '▶' : '◀';
+}
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════ */
+function updateDashboard() {
+  const pins  = DB.pins.length;
+  const sold  = DB.pins.filter(p=>p.status==='sold').length;
+  const rev   = DB.sales.reduce((s,x)=>s+(+x.amount||0),0);
+  const appts = DB.appts.length;
+  $id('db-pins').textContent    = pins.toLocaleString();
+  $id('db-revenue').textContent = fmtMoney(rev);
+  $id('db-appts').textContent   = appts;
+  $id('db-rate').textContent    = pins>0 ? (sold/pins*100).toFixed(1)+'%' : '0%';
+  $id('sb-pin-count').textContent = pins;
+  const apptBadge = $id('sb-appt-count');
+  if(appts>0){ apptBadge.textContent=appts; apptBadge.style.display='inline-flex'; }
+  else { apptBadge.style.display='none'; }
+  // Activity
+  const ac = $id('db-activity');
+  if(activityLog.length===0) {
+    ac.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No activity yet</div><div class="empty-sub">Pins, sales, and appointments will appear here.</div></div>';
+  } else {
+    ac.innerHTML = activityLog.slice(0,8).map(a=>`
+      <div class="activity-item">
+        <div class="activity-icon" style="background:${a.bg}">${a.icon}</div>
+        <div class="activity-content">
+          <div class="activity-title">${a.title}</div>
+          <div class="activity-sub">${a.sub}</div>
+        </div>
+        <div class="activity-time">${timeSince(a.ts)}</div>
+      </div>`).join('');
+  }
+  // Today's appointments
+  const today = todayISO();
+  const todayAppts = DB.appts.filter(a=>a.date===today).sort((a,b)=>a.time.localeCompare(b.time));
+  const ta = $id('db-today-appts');
+  if(todayAppts.length===0) {
+    ta.innerHTML='<div class="empty-state" style="padding:40px 20px"><div class="empty-icon">📅</div><div class="empty-title">No appointments today</div></div>';
+  } else {
+    ta.innerHTML = todayAppts.map(a=>`
+      <div class="appt-item">
+        <div class="appt-item-time">${fmtTime(a.time)}</div>
+        <div class="appt-item-name">${a.cust}</div>
+        <div class="appt-item-detail">${a.addr}</div>
+        <div class="appt-item-detail" style="margin-top:4px">${repName(a.rep)} · <span class="badge badge-${a.type==='close'?'green':a.type==='demo'?'violet':a.type==='followup'?'amber':'blue'}" style="font-size:10px;padding:2px 7px">${a.type}</span></div>
+      </div>`).join('');
+  }
+}
+
+function logActivity(icon, title, sub, bg) {
+  activityLog.unshift({icon, title, sub, bg, ts: Date.now()});
+  if(activityLog.length > 40) activityLog.pop();
+  updateDashboard();
+}
+
+/* ═══════════════════════════════════════════════
+   MAP
+═══════════════════════════════════════════════ */
+let lmap=null, mapTool='pin', mapMarkers={}, activePinId=null;
+let lassoPoints=[], lassoLayerGroup=null;
+
+function mkIcon(status) {
+  const c = STATUS_COLORS[status] || '#475569';
+  return L.divIcon({
+    html:`<div style="width:14px;height:14px;border-radius:50%;background:${c};border:2.5px solid rgba(255,255,255,0.3);box-shadow:0 2px 6px rgba(0,0,0,0.4),0 0 8px ${c}66"></div>`,
+    className:'', iconSize:[14,14], iconAnchor:[7,7]
+  });
+}
+
+function initMap() {
+  if(lmap) { lmap.invalidateSize(); return; }
+  lmap = L.map('leaflet-map', {center:[36.677,-121.655], zoom:12, zoomControl:true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap contributors', maxZoom:20
+  }).addTo(lmap);
+  lassoLayerGroup = L.layerGroup().addTo(lmap);
+  lmap.on('click', onMapClick);
+  document.addEventListener('keydown', e => {
+    if(e.key==='Escape' && mapTool==='lasso') cancelLasso();
+    if(e.key==='Enter' && mapTool==='lasso' && lassoPoints.length>=3) finishLasso();
+  });
+}
+
+function setMapTool(t, btn) {
+  mapTool = t;
+  document.querySelectorAll('.map-tool').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(lmap) lmap.getContainer().style.cursor = t==='lasso' ? 'crosshair' : '';
+  if(t==='lasso') {
+    $id('lasso-hint').style.display='block';
+    $id('lasso-hint').textContent = 'Click to start drawing — add points around your target area';
+  } else {
+    // Clear lasso state directly — do NOT call cancelLasso() here to avoid circular calls
+    lassoPoints=[];
+    if(lassoLayerGroup) lassoLayerGroup.clearLayers();
+    $id('lasso-hint').style.display='none';
+  }
+}
+
+function onMapClick(e) {
+  if(mapTool==='pin') { dropPin(e.latlng); }
+  else if(mapTool==='lasso') { addLassoPoint(e.latlng); }
+}
+
+function dropPin(latlng) {
+  const pin = {id:IDs.pin++, lat:latlng.lat, lng:latlng.lng, fname:'', lname:'', addr:`${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`, phone:'', status:'new', rep:'', areaId:'', notes:''};
+  DB.pins.push(pin);
+  placeMarker(pin);
+  updateMapUI();
+  logActivity('📍','Pin dropped',pin.addr,'var(--blue-ghost)');
+  openPinModal(pin.id);
+}
+
+function placeMarker(pin) {
+  const m = L.marker([pin.lat, pin.lng], {icon:mkIcon(pin.status), draggable:true}).addTo(lmap);
+  m.on('click', () => openPinModal(pin.id));
+  m.on('dragend', e => { const ll=e.target.getLatLng(); pin.lat=ll.lat; pin.lng=ll.lng; });
+  mapMarkers[pin.id] = m;
+}
+
+function updateMapUI() {
+  const total=DB.pins.length, sold=DB.pins.filter(p=>p.status==='sold').length;
+  const appt=DB.pins.filter(p=>p.status==='appt').length, nh=DB.pins.filter(p=>p.status==='nh').length;
+  $id('ms-total').textContent=total; $id('ms-sold').textContent=sold;
+  $id('ms-appt').textContent=appt; $id('ms-nh').textContent=nh;
+  $id('map-total-badge').textContent=total+' pin'+(total!==1?'s':'');
+  $id('sb-pin-count').textContent=total;
+  const scroll=$id('pin-list-scroll');
+  if(DB.pins.length===0) {
+    scroll.innerHTML='<div class="empty-state" style="padding:40px 16px"><div class="empty-icon" style="font-size:28px">📍</div><div class="empty-title" style="font-size:13px">No pins yet</div><div class="empty-sub" style="font-size:12px">Click the map to drop a pin, or use Lasso Area to generate house pins.</div></div>';
+    return;
+  }
+  scroll.innerHTML = [...DB.pins].reverse().map(p => {
+    const name=(p.fname||p.lname) ? `${p.fname} ${p.lname}`.trim() : 'Unnamed';
+    return `<div class="pin-row" onclick="openPinModal(${p.id})">
+      <div class="pin-dot" style="background:${STATUS_COLORS[p.status]||'#475569'}"></div>
+      <div class="pin-info"><div class="pin-name">${name}</div><div class="pin-addr">${p.addr}</div></div>
+      <span class="badge ${p.status==='sold'?'badge-green':p.status==='appt'?'badge-violet':p.status==='nh'?'badge-gray':p.status==='no'?'badge-red':p.status==='contact'?'badge-amber':'badge-blue'}" style="font-size:9px;padding:2px 7px">${p.status==='nh'?'N/H':p.status}</span>
+    </div>`;
+  }).join('');
+}
+
+/* Lasso */
+function addLassoPoint(ll) {
+  lassoPoints.push(ll);
+  lassoLayerGroup.clearLayers();
+  if(lassoPoints.length===1) {
+    L.circleMarker(ll,{radius:7,color:'#3b82f6',fillColor:'#3b82f6',fillOpacity:1,weight:2}).addTo(lassoLayerGroup);
+    $id('lasso-hint').textContent='First point set — keep clicking to draw your area boundary';
+  } else {
+    L.polygon(lassoPoints,{color:'#3b82f6',fillColor:'#3b82f6',fillOpacity:0.08,weight:2,dashArray:'6,4'}).addTo(lassoLayerGroup);
+    lassoPoints.forEach((pt,i)=>{
+      L.circleMarker(pt,{radius:i===0?7:4,color:'#3b82f6',fillColor:i===0?'#3b82f6':'#f1f5f9',fillOpacity:1,weight:2}).addTo(lassoLayerGroup);
+    });
+    $id('lasso-hint').textContent=`${lassoPoints.length} points — press Enter or click first point to generate pins`;
+  }
+}
+
+function cancelLasso() {
+  lassoPoints=[];
+  if(lassoLayerGroup) lassoLayerGroup.clearLayers();
+  $id('lasso-hint').style.display='none';
+  // Switch tool button back to pin mode (setMapTool no longer calls cancelLasso, safe to call)
+  mapTool='pin';
+  const pinBtn=$id('tool-pin');
+  if(pinBtn){
+    document.querySelectorAll('.map-tool').forEach(b=>b.classList.remove('active'));
+    pinBtn.classList.add('active');
+  }
+  if(lmap) lmap.getContainer().style.cursor='';
+}
+
+async function finishLasso() {
+  if(lassoPoints.length<3){toast('Draw at least 3 points first','error');return;}
+  $id('lasso-hint').style.display='none';
+  const loader=$id('map-loader'); loader.classList.add('show');
+  $id('map-loader-msg').textContent='Querying OpenStreetMap for buildings...';
+  const lats=lassoPoints.map(p=>p.lat), lngs=lassoPoints.map(p=>p.lng);
+  const south=Math.min(...lats)-0.001, north=Math.max(...lats)+0.001, west=Math.min(...lngs)-0.001, east=Math.max(...lngs)+0.001;
+  const query=`[out:json][timeout:25];(node["addr:housenumber"](${south},${west},${north},${east});way["building"](${south},${west},${north},${east}););out center;`;
+  let added=0;
+  try {
+    const res=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query));
+    if(!res.ok)throw new Error('Overpass returned '+res.status);
+    const data=await res.json();
+    $id('map-loader-msg').textContent=`Found ${data.elements.length} buildings — placing pins...`;
+    for(const el of data.elements) {
+      const lat=el.type==='node'?el.lat:el.center?.lat, lng=el.type==='node'?el.lon:el.center?.lon;
+      if(!lat||!lng||!ptInPoly({lat,lng},lassoPoints)) continue;
+      const hn=el.tags?.['addr:housenumber']||'', st=el.tags?.['addr:street']||'';
+      const addr=hn&&st?`${hn} ${st}`:`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      const pin={id:IDs.pin++,lat,lng,addr,fname:'',lname:'',phone:'',status:'nh',rep:'',areaId:'',notes:''};
+      DB.pins.push(pin); placeMarker(pin); added++;
+    }
+    if(added===0) {
+      $id('map-loader-msg').textContent='No OSM data — using grid estimate...';
+      await new Promise(r=>setTimeout(r,600));
+      const grid=gridInPoly(lassoPoints);
+      for(const g of grid) {
+        const pin={id:IDs.pin++,...g,fname:'',lname:'',phone:'',status:'nh',rep:'',areaId:'',notes:''};
+        DB.pins.push(pin); placeMarker(pin); added++;
+      }
+    }
+    toast(`✓ ${added} pins generated from lasso area`,'success');
+    logActivity('✏️','Lasso area scanned',`${added} house pins created`,'rgba(16,185,129,0.15)');
+  } catch(err) {
+    toast('Could not fetch building data — check connection','error');
+  } finally {
+    loader.classList.remove('show');
+    cancelLasso();
+    updateMapUI();
+    updateDashboard();
+  }
+}
+
+function ptInPoly(pt, poly) {
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i].lat,yi=poly[i].lng,xj=poly[j].lat,yj=poly[j].lng;
+    if(((yi>pt.lng)!==(yj>pt.lng))&&(pt.lat<(xj-xi)*(pt.lng-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
+function gridInPoly(poly) {
+  const lats=poly.map(p=>p.lat),lngs=poly.map(p=>p.lng);
+  const s=Math.min(...lats),n=Math.max(...lats),w=Math.min(...lngs),e=Math.max(...lngs);
+  const step=0.00045; const pts=[];
+  for(let lat=s;lat<=n;lat+=step) for(let lng=w;lng<=e;lng+=step)
+    if(ptInPoly({lat,lng},poly)) pts.push({lat,lng,addr:`${lat.toFixed(5)}, ${lng.toFixed(5)}`});
+  return pts.slice(0,200);
+}
+
+function clearAllPins() {
+  if(!DB.pins.length) return;
+  if(!confirm(`Remove all ${DB.pins.length} pins from the map?`)) return;
+  Object.values(mapMarkers).forEach(m=>lmap.removeLayer(m));
+  mapMarkers={}; DB.pins=[];
+  updateMapUI(); updateDashboard();
+  toast('All pins cleared','info');
+}
+
+/* Pin modal */
+function openPinModal(id) {
+  const pin=DB.pins.find(p=>p.id===id); if(!pin) return;
+  activePinId=id;
+  refreshAllSelects();
+  $id('pin-fname').value=pin.fname||''; $id('pin-lname').value=pin.lname||'';
+  $id('pin-addr').value=pin.addr||''; $id('pin-phone').value=pin.phone||'';
+  $id('pin-status').value=pin.status||'nh'; $id('pin-rep').value=pin.rep||'';
+  $id('pin-area').value=pin.areaId||''; $id('pin-notes').value=pin.notes||'';
+  $id('pin-delete-btn').style.display='inline-flex';
+  openModal('modal-pin');
+}
+function savePin() {
+  const pin=DB.pins.find(p=>p.id===activePinId); if(!pin) return;
+  pin.fname=$id('pin-fname').value.trim(); pin.lname=$id('pin-lname').value.trim();
+  pin.phone=$id('pin-phone').value.trim(); pin.status=$id('pin-status').value;
+  pin.rep=$id('pin-rep').value; pin.areaId=$id('pin-area').value; pin.notes=$id('pin-notes').value.trim();
+  if(mapMarkers[pin.id]) mapMarkers[pin.id].setIcon(mkIcon(pin.status));
+  updateMapUI(); updateDashboard();
+  toast('Lead saved','success'); closeModal('modal-pin');
+}
+function deletePin() {
+  if(!confirm('Delete this pin permanently?')) return;
+  if(mapMarkers[activePinId]){lmap.removeLayer(mapMarkers[activePinId]);delete mapMarkers[activePinId];}
+  DB.pins=DB.pins.filter(p=>p.id!==activePinId);
+  activePinId=null; // Clear stale reference
+  updateMapUI(); updateDashboard(); closeModal('modal-pin');
+  toast('Pin deleted','info');
+}
+
+/* ═══════════════════════════════════════════════
+   CALENDAR
+═══════════════════════════════════════════════ */
+let calDate=new Date(); let editApptId=null;
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function renderCalendar() {
+  $id('cal-page-title').textContent=`${MONTHS[calDate.getMonth()]} ${calDate.getFullYear()}`;
+  $id('cal-month-label').textContent=`${MONTHS[calDate.getMonth()].slice(0,3).toUpperCase()} ${calDate.getFullYear()}`;
+  $id('cal-hd').innerHTML=DAYS.map(d=>`<div class="cal-day-hd">${d}</div>`).join('');
+  const y=calDate.getFullYear(), m=calDate.getMonth();
+  const firstDay=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate(), prevDim=new Date(y,m,0).getDate();
+  const today=new Date();
+  let cells=[];
+  for(let i=firstDay-1;i>=0;i--) cells.push({d:prevDim-i,other:true});
+  for(let i=1;i<=dim;i++) cells.push({d:i,other:false});
+  while(cells.length%7!==0) cells.push({d:cells.length-firstDay-dim+1,other:true});
+  $id('cal-grid').innerHTML=cells.map(c=>{
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(c.d).padStart(2,'0')}`;
+    const da=c.other?[]:DB.appts.filter(a=>a.date===ds);
+    const isToday=!c.other&&today.getDate()===c.d&&today.getMonth()===m&&today.getFullYear()===y;
+    const cls='cal-cell'+(c.other?' other-month':'')+(isToday?' today':'');
+    return `<div class="${cls}" ondblclick="${c.other?'':'openApptModal(\''+ds+'\')'}">
+      <div class="cal-day-num">${c.d}</div>
+      ${da.slice(0,3).map(a=>`<span class="cal-appt-pill appt-${a.type}">${fmtTime(a.time)} ${a.cust}</span>`).join('')}
+      ${da.length>3?`<span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">+${da.length-3} more</span>`:''}
+    </div>`;
+  }).join('');
+  // Upcoming list
+  const now=new Date();
+  const up=DB.appts.filter(a=>new Date(a.date+'T'+a.time)>=now).sort((a,b)=>new Date(a.date+'T'+a.time)-new Date(b.date+'T'+b.time)).slice(0,8);
+  $id('appt-upcoming-list').innerHTML=up.length===0?
+    '<div class="empty-state" style="padding:40px 16px"><div class="empty-icon" style="font-size:24px">📅</div><div class="empty-title" style="font-size:13px">No upcoming appointments</div></div>' :
+    up.map(a=>`
+      <div class="appt-item" onclick="openApptModal(null,${a.id})">
+        <div class="appt-item-time">${a.date} · ${fmtTime(a.time)}</div>
+        <div class="appt-item-name">${a.cust}</div>
+        <div class="appt-item-detail">${a.addr}</div>
+        <div class="appt-item-detail" style="margin-top:3px">${repName(a.rep)}</div>
+      </div>`).join('');
+}
+function calNav(d){calDate.setMonth(calDate.getMonth()+d);renderCalendar();}
+function openApptModal(date, editId=null) {
+  refreshAllSelects();
+  editApptId=editId;
+  $id('appt-modal-title').textContent = editId ? '📅 Edit Appointment' : '📅 New Appointment';
+  $id('appt-delete-btn').style.display = editId ? 'inline-flex':'none';
+  if(editId) {
+    const a=DB.appts.find(x=>x.id===editId); if(!a)return;
+    $id('appt-cust').value=a.cust; $id('appt-phone').value=a.phone; $id('appt-addr').value=a.addr;
+    $id('appt-date').value=a.date; $id('appt-time').value=a.time; $id('appt-type').value=a.type;
+    $id('appt-rep').value=a.rep; $id('appt-notes').value=a.notes;
+  } else {
+    $id('appt-cust').value=''; $id('appt-phone').value=''; $id('appt-addr').value='';
+    $id('appt-date').value=date||todayISO(); $id('appt-time').value='10:00';
+    $id('appt-type').value='demo'; $id('appt-rep').value=''; $id('appt-notes').value='';
+  }
+  openModal('modal-appt');
+}
+function saveAppt() {
+  const cust=$id('appt-cust').value.trim(), date=$id('appt-date').value;
+  if(!cust||!date){toast('Name and date are required','error');return;}
+  const obj={cust,phone:$id('appt-phone').value,addr:$id('appt-addr').value,date,time:$id('appt-time').value,type:$id('appt-type').value,rep:$id('appt-rep').value,notes:$id('appt-notes').value};
+  if(editApptId) { Object.assign(DB.appts.find(a=>a.id===editApptId),obj); toast('Appointment updated','success'); }
+  else { DB.appts.push({id:IDs.appt++,...obj}); logActivity('📅',`Appt: ${cust}`,`${date} ${fmtTime(obj.time)}`,'rgba(139,92,246,0.15)'); toast('Appointment scheduled','success'); }
+  renderCalendar(); updateDashboard(); closeModal('modal-appt');
+}
+function deleteAppt() {
+  if(!confirm('Delete this appointment?'))return;
+  DB.appts=DB.appts.filter(a=>a.id!==editApptId);
+  editApptId=null; // Clear stale reference
+  renderCalendar(); updateDashboard(); closeModal('modal-appt'); toast('Appointment deleted','info');
+}
+
+/* ═══════════════════════════════════════════════
+   SALES
+═══════════════════════════════════════════════ */
+function renderSales() {
+  const total=DB.sales.reduce((s,x)=>s+(+x.amount||0),0);
+  $id('sales-total-rev').textContent=fmtMoney(total);
+  $id('sales-total-sub').textContent=DB.sales.length+' transaction'+(DB.sales.length!==1?'s':'')+' logged';
+  $id('sales-count-hd').textContent=DB.sales.length+' transactions';
+  const empty=$id('sales-empty'), table=$id('sales-table');
+  if(DB.sales.length===0){empty.style.display='flex';table.style.display='none';}
+  else {
+    empty.style.display='none'; table.style.display='table';
+    $id('sales-tbody').innerHTML=[...DB.sales].reverse().map(s=>`
+      <tr>
+        <td class="mono">${s.date}</td><td class="primary">${s.cust}</td>
+        <td>${repName(s.rep)}</td><td>${s.product}</td>
+        <td class="money">${fmtMoney(s.amount)}</td>
+      </tr>`).join('');
+  }
+  // Rep bars — skip sales with no assigned rep
+  const rt={};
+  DB.sales.forEach(s=>{ if(!s.rep) return; if(!rt[s.rep])rt[s.rep]=0; rt[s.rep]+=(+s.amount||0); });
+  const sorted=Object.entries(rt).sort((a,b)=>b[1]-a[1]), maxAmt=sorted[0]?sorted[0][1]:1;
+  const barColors=['#2563eb','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ef4444'];
+  $id('sales-rep-bars').innerHTML=sorted.length===0?'<div class="empty-state" style="padding:30px"><div class="empty-sub">Log sales to see data</div></div>':
+    sorted.map(([rid,amt],i)=>`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:72px;font-size:11px;font-family:var(--font-mono);color:var(--text-muted);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${repName(rid).split(' ')[0]}</div>
+        <div style="flex:1;height:22px;background:var(--bg-elevated);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(amt/maxAmt*100)}%;background:${barColors[i%6]};border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;transition:width .8s ease">
+            <span style="font-size:10px;font-weight:700;color:#fff;font-family:var(--font-mono)">${fmtMoney(amt)}</span>
+          </div>
+        </div>
+      </div>`).join('');
+}
+function openSaleModal(){refreshAllSelects();$id('sale-cust').value='';$id('sale-date').value=todayISO();$id('sale-addr').value='';$id('sale-amount').value='';$id('sale-rep').value='';$id('sale-area').value='';openModal('modal-sale');}
+function saveSale(){
+  const cust=$id('sale-cust').value.trim(),amt=parseFloat($id('sale-amount').value)||0;
+  if(!cust||amt<=0){toast('Customer name and a valid amount are required','error');return;}
+  const s={id:IDs.sale++,cust,date:$id('sale-date').value,addr:$id('sale-addr').value,product:$id('sale-product').value,amount:amt,rep:$id('sale-rep').value,areaId:$id('sale-area').value};
+  DB.sales.push(s);
+  logActivity('💰',`Sale closed: ${cust}`,fmtMoney(amt),'rgba(16,185,129,0.15)');
+  renderSales();renderLeaderboard();updateDashboard();closeModal('modal-sale');toast('Sale logged — '+fmtMoney(amt),'success');
+}
+
+/* ═══════════════════════════════════════════════
+   LEADERBOARD
+═══════════════════════════════════════════════ */
+let lbPeriod='all';
+function setLBPeriod(p, btn) {
+  lbPeriod = p;
+  document.querySelectorAll('.lb-period-btn').forEach(b => {
+    b.classList.remove('btn-primary');
+    b.classList.add('btn-ghost');
+  });
+  btn.classList.remove('btn-ghost');
+  btn.classList.add('btn-primary');
+  renderLeaderboard();
+}
+function renderLeaderboard(){
+  const now=new Date(), wk=new Date(now-7*86400000), mo=new Date(now.getFullYear(),now.getMonth(),1);
+  const filt=DB.sales.filter(s=>{
+    if(lbPeriod==='week')return new Date(s.date)>=wk;
+    if(lbPeriod==='month')return new Date(s.date)>=mo;
+    return true;
+  });
+  const rd={};
+  filt.forEach(s=>{const k=s.rep||'none';if(!rd[k])rd[k]={rid:s.rep,amt:0,closes:0};rd[k].amt+=(+s.amount||0);rd[k].closes++;});
+  const sorted=Object.values(rd).sort((a,b)=>b.amt-a.amt),maxAmt=sorted[0]?.amt||1;
+  $id('lb-empty').style.display=sorted.length===0?'flex':'none';
+  $id('lb-table').style.display=sorted.length===0?'none':'table';
+  // Podium (top 3)
+  const podium=$id('lb-podium');
+  if(sorted.length>=1){
+    podium.style.display='grid';
+    const medals=['gold','silver','bronze'], icons=['🥇','🥈','🥉'];
+    podium.innerHTML=sorted.slice(0,3).map((d,i)=>{
+      const rep=repObj(d.rid), color=rep?.color||'#2563eb';
+      const doors=DB.pins.filter(p=>p.rep==d.rid).length;
+      return`<div class="lb-podium-card ${medals[i]}">
+        <div class="lb-medal">${icons[i]}</div>
+        <div class="lb-podium-avatar" style="background:${color}22;color:${color};border-color:${color}44">${rep?initials(rep):'?'}</div>
+        <div class="lb-podium-name">${rep?`${rep.fname} ${rep.lname}`:'Unknown'}</div>
+        <div class="lb-podium-area">${rep?.areaId?DB.areas.find(a=>a.id==rep.areaId)?.name||'—':'—'}</div>
+        <div class="lb-podium-amt">${fmtMoney(d.amt)}</div>
+        <div class="lb-podium-closes">${d.closes} close${d.closes!==1?'s':''} · ${doors} doors</div>
+      </div>`;
+    }).join('');
+  } else { podium.style.display='none'; }
+  const rankBadge=['badge-amber','badge-gray','badge-violet'];
+  $id('lb-tbody').innerHTML=sorted.map((d,i)=>{
+    const rep=repObj(d.rid),color=rep?.color||'#475569';
+    const doors=DB.pins.filter(p=>p.rep==d.rid).length;
+    const rate=doors>0?(d.closes/doors*100).toFixed(1)+'%':'—';
+    return`<tr>
+      <td><span class="${rankBadge[i]||'badge-gray'} badge" style="font-size:12px;font-weight:800">${i+1}</span></td>
+      <td><div style="display:flex;align-items:center;gap:10px">
+        <div style="width:34px;height:34px;border-radius:9px;background:${color}22;color:${color};border:1px solid ${color}44;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">${rep?initials(rep):'?'}</div>
+        <div><div class="primary" style="font-size:13px;font-weight:600;color:var(--text-primary)">${rep?`${rep.fname} ${rep.lname}`:'Unknown'}</div></div>
+      </div></td>
+      <td class="mono">${rep?.areaId?DB.areas.find(a=>a.id==rep.areaId)?.name||'—':'—'}</td>
+      <td>
+        <div style="font-size:16px;font-weight:800;color:var(--green);font-family:var(--font-display)">${fmtMoney(d.amt)}</div>
+        <div style="height:3px;background:var(--bg-elevated);border-radius:2px;margin-top:5px;width:100px"><div style="height:100%;width:${Math.round(d.amt/maxAmt*100)}%;background:${color};border-radius:2px"></div></div>
+      </td>
+      <td style="font-size:15px;font-weight:700;color:var(--blue-light);font-family:var(--font-mono)">${d.closes}</td>
+      <td class="mono">${doors}</td>
+      <td class="mono">${rate}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   AREAS
+═══════════════════════════════════════════════ */
+function renderAreas(){
+  const g=$id('areas-grid');
+  if(DB.areas.length===0){
+    g.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🗺</div><div class="empty-title">No territories defined</div><div class="empty-sub">Create your first territory to start organizing your canvassing zones.</div></div>';
+    return;
+  }
+  g.innerHTML=DB.areas.map(a=>{
+    const rep=repObj(a.repId);
+    const pins=DB.pins.filter(p=>p.areaId==a.id).length;
+    const sold=DB.pins.filter(p=>p.areaId==a.id&&p.status==='sold').length;
+    const rate=pins>0?(sold/pins*100).toFixed(1):0;
+    return`<div class="area-card">
+      <div class="area-stripe" style="background:${a.color}"></div>
+      <div class="area-name">${a.name}</div>
+      <div class="area-meta">ZIP: ${a.zip||'—'} · ${rep?`${rep.fname} ${rep.lname}`:'Unassigned'}</div>
+      <div class="area-stats">
+        <div class="area-stat"><div class="area-stat-val" style="color:${a.color}">${pins}</div><div class="area-stat-lbl">Doors</div></div>
+        <div class="area-stat"><div class="area-stat-val" style="color:var(--green)">${sold}</div><div class="area-stat-lbl">Sold</div></div>
+        <div class="area-stat"><div class="area-stat-val" style="color:var(--text-muted)">${rate}%</div><div class="area-stat-lbl">Rate</div></div>
+      </div>
+      <div class="area-progress"><div class="area-progress-fill" style="width:${Math.min(100,+rate*4)}%;background:${a.color}"></div></div>
+      ${a.notes?`<div class="area-notes">${a.notes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function openAreaModal(){refreshAllSelects();$id('area-name').value='';$id('area-zip').value='';$id('area-rep').value='';$id('area-notes').value='';openModal('modal-area');}
+function saveArea(){
+  if(!$id('area-name').value.trim()){toast('Area name is required','error');return;}
+  const a={id:IDs.area++,name:$id('area-name').value.trim(),zip:$id('area-zip').value.trim(),repId:$id('area-rep').value,notes:$id('area-notes').value.trim(),color:AREA_COLORS[DB.areas.length%AREA_COLORS.length]};
+  DB.areas.push(a);
+  refreshAllSelects();renderAreas();closeModal('modal-area');toast('Territory created','success');
+}
+
+/* ═══════════════════════════════════════════════
+   TEAM
+═══════════════════════════════════════════════ */
+function renderTeam(){
+  $id('team-grid').innerHTML=DB.reps.map(r=>{
+    const rev=DB.sales.filter(s=>s.rep==r.id).reduce((t,s)=>t+(+s.amount||0),0);
+    const leads=DB.pins.filter(p=>p.rep==r.id).length;
+    const appts=DB.appts.filter(a=>a.rep==r.id).length;
+    const areaName=r.areaId?DB.areas.find(a=>a.id==r.areaId)?.name:'—';
+    return`<div class="team-card">
+      <div class="team-card-top">
+        <div class="team-avatar" style="background:${r.color}1a;color:${r.color};border-color:${r.color}33">${initials(r)}</div>
+        <div><div class="team-name">${r.fname} ${r.lname}</div><div class="team-role">${r.role}</div><div class="team-area-lbl">${areaName||'No territory'}</div></div>
+      </div>
+      <div class="team-metrics">
+        <div><div class="team-metric-val" style="color:var(--green)">${rev>0?fmtMoney(rev):'$0'}</div><div class="team-metric-lbl">Revenue</div></div>
+        <div><div class="team-metric-val" style="color:var(--blue-light)">${leads}</div><div class="team-metric-lbl">Leads</div></div>
+        <div><div class="team-metric-val" style="color:var(--violet)">${appts}</div><div class="team-metric-lbl">Appts</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openRepModal(){refreshAllSelects();$id('rep-fname').value='';$id('rep-lname').value='';$id('rep-role').value='rep';$id('rep-phone').value='';$id('rep-area').value='';openModal('modal-rep');}
+function saveRep(){
+  if(!$id('rep-fname').value.trim()||!$id('rep-lname').value.trim()){toast('First and last name required','error');return;}
+  const r={id:IDs.rep++,fname:$id('rep-fname').value.trim(),lname:$id('rep-lname').value.trim(),role:$id('rep-role').value,phone:$id('rep-phone').value.trim(),areaId:$id('rep-area').value,color:AREA_COLORS[DB.reps.length%AREA_COLORS.length]};
+  DB.reps.push(r);refreshAllSelects();renderTeam();closeModal('modal-rep');toast(`${r.fname} ${r.lname} added to team`,'success');
+}
+
+/* ═══════════════════════════════════════════════
+   WEATHER — wttr.in live API
+═══════════════════════════════════════════════ */
+let wxLoaded=false;
+const WX_ICONS={113:'☀️',116:'⛅',119:'☁️',122:'🌫',143:'🌫',176:'🌦',179:'🌨',182:'🌧',185:'🌧',200:'⛈',263:'🌦',266:'🌧',281:'🌧',284:'🌧',293:'🌦',296:'🌧',299:'🌧',302:'🌧',305:'🌧',308:'🌧',317:'🌧',320:'🌨',323:'🌨',326:'🌨',329:'❄️',332:'❄️',335:'❄️',338:'❄️',353:'🌦',356:'🌧',359:'🌧',362:'🌨',365:'🌨',368:'🌨',386:'⛈',389:'⛈',392:'⛈',395:'❄️'};
+const wxIcon=c=>WX_ICONS[+c]||'🌡';
+
+async function loadWeather(force=false){
+  if(wxLoaded&&!force) return;
+  $id('wx-content').innerHTML='<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Fetching live weather from wttr.in...</div></div>';
+  $id('wx-alert-area').innerHTML='';
+  try{
+    const res=await fetch('https://wttr.in/Salinas,CA?format=j1');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const d=await res.json();
+    wxLoaded=true; // Only mark loaded after successful response
+    const cur=d.current_condition[0], loc=d.nearest_area[0];
+    const icon=wxIcon(cur.weatherCode), temp=cur.temp_F, feels=cur.FeelsLikeF, desc=cur.weatherDesc[0].value;
+    const hum=cur.humidity, wind=`${cur.windspeedMiles} mph ${cur.winddir16Point}`;
+    const vis=cur.visibility+' mi', uv=cur.uvIndex, cloud=cur.cloudcover+'%';
+    // Update top bar
+    $id('top-wx-icon').textContent=icon; $id('top-wx-temp').textContent=temp+'°F'; $id('top-wx-cond').textContent=desc;
+    const fc=d.weather.slice(0,7);
+    const DAYS_S=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const isRain=desc.toLowerCase().includes('rain')||desc.toLowerCase().includes('drizzle');
+    const wNum=+cur.windspeedMiles, uvNum=+uv, tNum=+temp;
+    const fieldGrade=!isRain&&tNum>52&&tNum<92?'Excellent':!isRain&&tNum>42?'Good':isRain?'Poor':'Fair';
+    const fg=fieldGrade==='Excellent'?'good':fieldGrade==='Good'?'ok':'bad';
+    $id('wx-content').innerHTML=`
+      <div class="wx-hero">
+        <div class="wx-current">
+          <div class="wx-icon-big">${icon}</div>
+          <div>
+            <div class="wx-temp-big">${temp}°F</div>
+            <div class="wx-feels">Feels like ${feels}°F</div>
+            <div class="wx-condition">${desc}</div>
+            <div class="wx-location">📍 Salinas / Monterey County, CA</div>
+          </div>
+        </div>
+        <div class="wx-details-card">
+          <div style="margin-bottom:6px" class="section-label">Current Conditions</div>
+          <div class="wx-detail-row"><span class="wx-detail-label">Humidity</span><span class="wx-detail-val">${hum}%</span></div>
+          <div class="wx-detail-row"><span class="wx-detail-label">Wind</span><span class="wx-detail-val">${wind}</span></div>
+          <div class="wx-detail-row"><span class="wx-detail-label">Visibility</span><span class="wx-detail-val">${vis}</span></div>
+          <div class="wx-detail-row"><span class="wx-detail-label">UV Index</span><span class="wx-detail-val" style="color:${uvNum<=2?'var(--green)':uvNum<=5?'var(--amber)':'var(--red)'}">${uv}</span></div>
+          <div class="wx-detail-row"><span class="wx-detail-label">Cloud Cover</span><span class="wx-detail-val">${cloud}</span></div>
+          <div class="wx-detail-row"><span class="wx-detail-label">Precipitation</span><span class="wx-detail-val">${cur.precipMM} mm</span></div>
+        </div>
+      </div>
+      <div class="section-label" style="margin-bottom:12px">7-Day Forecast</div>
+      <div class="fc-row">${fc.map(day=>{const dd=new Date(day.date);return`<div class="fc-card"><div class="fc-day">${DAYS_S[dd.getDay()]}</div><div class="fc-icon-big">${wxIcon(day.hourly[4]?.weatherCode||113)}</div><div class="fc-hi">${day.maxtempF}°</div><div class="fc-lo">${day.mintempF}°</div></div>`;}).join('')}</div>
+      <div class="wx-impact">
+        <h3>Field Canvassing Impact Assessment</h3>
+        <div class="wx-impact-grid">
+          <div class="impact-item"><div class="impact-icon">🚶</div><div class="impact-label">Canvassing</div><div class="impact-val impact-${fg}">${fieldGrade}</div></div>
+          <div class="impact-item"><div class="impact-icon">🌧</div><div class="impact-label">Rain Risk</div><div class="impact-val impact-${isRain?'bad':'good'}">${isRain?'Active':'None'}</div></div>
+          <div class="impact-item"><div class="impact-icon">💨</div><div class="impact-label">Wind</div><div class="impact-val impact-${wNum<10?'good':wNum<20?'ok':'bad'}">${wNum<10?'Calm':wNum<20?'Breezy':'Windy'}</div></div>
+          <div class="impact-item"><div class="impact-icon">☀️</div><div class="impact-label">UV Risk</div><div class="impact-val impact-${uvNum<=2?'good':uvNum<=5?'ok':'bad'}">${uvNum<=2?'Low':uvNum<=5?'Moderate':'High'}</div></div>
+        </div>
+      </div>`;
+    if(isRain||wNum>20||tNum<42){
+      $id('wx-alert-area').innerHTML=`<div class="wx-alert-bar"><div class="wx-alert-icon">⚠️</div><div class="wx-alert-text"><strong>Field Advisory — </strong>${isRain?'Rain detected. Consider rescheduling canvassing. ':''} ${wNum>20?'High winds may affect door-to-door activities. ':''} ${tNum<42?'Cold temperatures below 42°F — dress appropriately.':''}</div></div>`;
+    }
+  } catch(err){
+    $id('wx-content').innerHTML=`<div style="background:var(--red-ghost);border:1px solid var(--red-border);border-radius:10px;padding:20px;color:var(--red);font-size:13px">⚠ Could not load weather: ${err.message}<br><br>This requires an active internet connection to wttr.in.</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   CRIME MAP — SpotCrime API
+═══════════════════════════════════════════════ */
+let crimeMap=null, crimeLoaded=false, crimeData=[], crimeMarkerList=[];
+const CRIME_COL={theft:['#f59e0b','rgba(245,158,11,0.2)'],burglary:['#ef4444','rgba(239,68,68,0.2)'],assault:['#ef4444','rgba(239,68,68,0.2)'],vandalism:['#8b5cf6','rgba(139,92,246,0.2)'],arrest:['#06b6d4','rgba(6,182,212,0.2)'],other:['#94a3b8','rgba(148,163,184,0.2)']};
+const cColor=t=>{const k=Object.keys(CRIME_COL).find(c=>t.toLowerCase().includes(c));return CRIME_COL[k||'other'];};
+
+async function loadCrimeData(force=false){
+  if(crimeLoaded&&!force) return;
+  $id('crime-info-bar').className='crime-info-bar';
+  $id('crime-info-bar').textContent='📡 Loading crime data from SpotCrime for Monterey County...';
+  if(!crimeMap){
+    crimeMap=L.map('crime-map-container',{center:[36.677,-121.655],zoom:12});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(crimeMap);
+  }
+  crimeMarkerList.forEach(m=>crimeMap.removeLayer(m)); crimeMarkerList=[];
+  try{
+    const res=await fetch('https://api.spotcrime.com/crimes.json?lat=36.677&lon=-121.655&r=0.025&key=spotcrime');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    crimeData=data.crimes||[];
+    if(crimeData.length===0)throw new Error('No incidents returned for this area');
+    crimeLoaded=true; // Only mark loaded after confirmed successful data
+    renderCrimeMarkers('all');
+    $id('crime-info-bar').className='crime-info-bar ok';
+    $id('crime-info-bar').textContent=`✅ ${crimeData.length} recent incidents loaded for Salinas / Monterey County`;
+    $id('crime-filters').style.display='flex';
+    $id('crime-list-card').style.display='block';
+    setTimeout(()=>crimeMap.invalidateSize(),200);
+  } catch(err){
+    $id('crime-info-bar').className='crime-info-bar err';
+    $id('crime-info-bar').innerHTML=`⚠️ SpotCrime data unavailable: ${err.message}<br><span style="font-size:11px;opacity:0.75">SpotCrime may not cover all Monterey County zip codes. The map is still interactive for viewing.</span>`;
+    setTimeout(()=>crimeMap.invalidateSize(),200);
+  }
+}
+
+function renderCrimeMarkers(type){
+  crimeMarkerList.forEach(m=>crimeMap.removeLayer(m)); crimeMarkerList=[];
+  const filtered=type==='all'?crimeData:crimeData.filter(c=>(c.type||'').toLowerCase().includes(type));
+  filtered.forEach(c=>{
+    if(!c.lat||!c.lon)return;
+    const [col]=cColor(c.type||'');
+    const m=L.circleMarker([c.lat,c.lon],{radius:7,color:col,fillColor:col,fillOpacity:0.7,weight:2}).addTo(crimeMap);
+    m.bindPopup(`<div style="font-family:'Outfit',sans-serif;min-width:180px;padding:4px 0"><b style="color:${col};font-size:13px">${c.type||'Unknown'}</b><br><span style="font-size:12px;color:#64748b">${c.address||''}</span><br><span style="font-size:11px;color:#94a3b8">${c.date||''}</span></div>`);
+    crimeMarkerList.push(m);
+  });
+  $id('crime-count-hd').textContent=filtered.length+' incidents';
+  $id('crime-rows').innerHTML=filtered.slice(0,25).map(c=>{
+    const [col]=cColor(c.type||'');
+    return`<div class="log-row"><span class="log-time">${c.date||'Unknown'}</span><span class="log-msg">${c.address||'Unknown location'}</span><span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44;font-size:10px">${c.type||'Unknown'}</span></div>`;
+  }).join('');
+}
+function filterCrime(type,btn){
+  document.querySelectorAll('.crime-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderCrimeMarkers(type);
+}
+
+/* ═══════════════════════════════════════════════
+   SERVICE STATUS — Real fetch checks
+═══════════════════════════════════════════════ */
+const SERVICES=[
+  {id:'internet',name:'Internet',desc:'General connectivity',url:'https://www.google.com'},
+  {id:'maps',name:'Map Tiles',desc:'OpenStreetMap',url:'https://tile.openstreetmap.org/0/0/0.png'},
+  {id:'weather',name:'Weather API',desc:'wttr.in',url:'https://wttr.in/test?format=j1'},
+  {id:'spotcrime',name:'Crime API',desc:'SpotCrime',url:'https://api.spotcrime.com'},
+  {id:'overpass',name:'Overpass API',desc:'Building data',url:'https://overpass-api.de'},
+  {id:'fonts',name:'CDN / Fonts',desc:'Google Fonts',url:'https://fonts.googleapis.com'},
+];
+let svcState={}, svcLog=[];
+
+async function checkOne(svc){
+  const t=Date.now();
+  try{
+    await fetch(svc.url,{mode:'no-cors',cache:'no-store',signal:AbortSignal.timeout(6000)});
+    return{ok:true,ms:Date.now()-t};
+  }catch{return{ok:false,ms:null};}
+}
+
+async function runStatusChecks(){
+  renderSvcCards(true);
+  const btn=$id('check-btn'); btn.disabled=true; btn.textContent='Checking...';
+  const results=await Promise.all(SERVICES.map(async s=>{const r=await checkOne(s);svcState[s.id]=r;return{...s,...r};}));
+  const allOk=results.every(r=>r.ok);
+  const banner=$id('ov-banner'), netDot=$id('net-indicator'), netLbl=$id('net-label');
+  if(allOk){
+    banner.className='ov-status-banner all-ok';
+    banner.innerHTML=`<div class="ov-banner-icon">✅</div><div><div class="ov-banner-title">All Systems Operational</div><div class="ov-banner-sub" id="ov-sub">Last checked: ${new Date().toLocaleTimeString()}</div></div>`;
+    netDot.className='net-dot'; netLbl.textContent='Online';
+    $id('sb-status-dot').style.background='var(--green)';
+  } else {
+    banner.className='ov-status-banner issues';
+    const downCount=results.filter(r=>!r.ok).length;
+    banner.innerHTML=`<div class="ov-banner-icon">⚠️</div><div><div class="ov-banner-title">${downCount} Service${downCount>1?'s':''} Unreachable</div><div class="ov-banner-sub">Last checked: ${new Date().toLocaleTimeString()}</div></div>`;
+    netDot.className='net-dot warn'; netLbl.textContent='Issues';
+    $id('sb-status-dot').style.background='var(--amber)';
+  }
+  svcLog.unshift({ts:new Date().toLocaleTimeString(),ok:results.filter(r=>r.ok).length,total:results.length,msg:allOk?'All checks passed':results.filter(r=>!r.ok).map(r=>r.name).join(', ')+' unreachable'});
+  if(svcLog.length>20)svcLog.pop();
+  $id('log-count-hd').textContent=svcLog.length+' check runs';
+  $id('status-log').innerHTML=svcLog.map(l=>`
+    <div class="log-row">
+      <span class="log-time">${l.ts}</span>
+      <span class="log-msg">${l.msg}</span>
+      <span class="log-score" style="color:${l.ok===l.total?'var(--green)':'var(--amber)'}">${l.ok}/${l.total}</span>
+    </div>`).join('');
+  renderSvcCards(false);
+  btn.disabled=false; btn.textContent='↻ Run Checks';
+}
+
+function renderSvcCards(checking){
+  $id('svc-grid').innerHTML=SERVICES.map(s=>{
+    const st=svcState[s.id], status=checking?'chk':st?(st.ok?'ok':'down'):'chk';
+    const colors={ok:['var(--green)','rgba(16,185,129,0.3)'],down:['var(--red)','rgba(239,68,68,0.3)'],chk:['var(--amber)','rgba(245,158,11,0.3)']};
+    const [fc,bc]=colors[status];
+    const labels={ok:'ONLINE',down:'UNREACHABLE',chk:'CHECKING'};
+    const bars=Array.from({length:22},(_,i)=>`<div class="svc-spark-bar" style="height:${8+Math.random()*36}px;background:${i<20?'var(--bg-elevated)':'transparent'};${status==='ok'?'background:var(--blue-light)22':status==='down'?'background:var(--red-ghost)':'background:var(--amber-ghost)'}"></div>`).join('');
+    return`<div class="svc-card" style="${status==='ok'?'':'border-color:'+bc}">
+      <div class="svc-card-top">
+        <div><div class="svc-name">${s.name}</div><div class="svc-desc">${s.desc}</div></div>
+        <div class="status-dot ${status==='ok'?'green':status==='down'?'red':'amber'}" style="margin-top:4px"></div>
+      </div>
+      <div class="svc-sparkline">${bars}</div>
+      <div class="svc-bottom">
+        <span class="${status}">${labels[status]}</span>
+        <span>${st?.ok?st.ms+'ms':'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  updateDashboard();
+  renderCalendar();
+  renderSales();
+  renderLeaderboard();
+  renderAreas();
+  renderTeam();
+  renderSvcCards(false);
+  // Load weather silently for top bar
+  setTimeout(()=>{
+    fetch('https://wttr.in/Salinas,CA?format=j1')
+      .then(r=>r.json())
+      .then(d=>{
+        const cur=d.current_condition[0];
+        $id('top-wx-icon').textContent=wxIcon(cur.weatherCode);
+        $id('top-wx-temp').textContent=cur.temp_F+'°F';
+        $id('top-wx-cond').textContent=cur.weatherDesc[0].value;
+      }).catch(()=>{});
+  }, 800);
+  // Auto-refresh dashboard every minute
+  setInterval(updateDashboard, 60000);
+  // Set today's date as default in date fields on page load
+  document.querySelectorAll('input[type=date]').forEach(el=>{ if(!el.value) el.value=todayISO(); });
+});
+</script>
+
+</body>
+</html>
